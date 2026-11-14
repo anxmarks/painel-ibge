@@ -1,0 +1,11 @@
+/* Design tokens: cores, tipografia e espaçamentos (definidos na Etapa 3) */
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+
+  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+}
