@@ -15,3 +15,8 @@ export const AGGREGATES = {
 
 // O PIB vem em mil reais; multiplicar por este fator converte para reais
 export const GDP_UNIT_MULTIPLIER = 1000;
+
+// Cache das respostas da API no localStorage.
+// Mudar a versão do prefixo invalida o cache antigo (ex.: quando o formato dos dados muda).
+export const CACHE_KEY_PREFIX = 'brasil-em-dados:v1:';
+export const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas

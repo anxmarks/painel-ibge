@@ -1,4 +1,5 @@
 import { API_BASE_URL, REFERENCE_YEAR, STATES_LOCATION, AGGREGATES } from '../config.js';
+import { withCache } from './cache.js';
 
 // Busca uma URL e devolve o JSON, com mensagens de erro amigáveis
 async function fetchJson(url) {
@@ -26,15 +27,17 @@ function buildAggregateUrl({ id, variable }) {
 
 // Lista de estados com sigla, nome e região
 export function fetchStates() {
-  return fetchJson(`${API_BASE_URL}/v1/localidades/estados`);
+  return withCache('states', () => fetchJson(`${API_BASE_URL}/v1/localidades/estados`));
 }
 
 // População residente por estado (resposta bruta do SIDRA)
 export function fetchPopulation() {
-  return fetchJson(buildAggregateUrl(AGGREGATES.population));
+  return withCache(`population:${REFERENCE_YEAR}`, () =>
+    fetchJson(buildAggregateUrl(AGGREGATES.population)),
+  );
 }
 
 // PIB por estado, em mil reais (resposta bruta do SIDRA)
 export function fetchGdp() {
-  return fetchJson(buildAggregateUrl(AGGREGATES.gdp));
+  return withCache(`gdp:${REFERENCE_YEAR}`, () => fetchJson(buildAggregateUrl(AGGREGATES.gdp)));
 }
