@@ -1,11 +1,49 @@
-/* Design tokens: cores, tipografia e espaçamentos (definidos na Etapa 3) */
+/* Design tokens: toda cor, fonte e espaçamento do painel sai daqui */
 :root {
-  --color-bg: #ffffff;
-  --color-text: #1a1a1a;
+  /* Cores de superfície e texto */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-text: #1b1f24;
+  --color-text-muted: #5b6573;
+  --color-border: #e1e4e8;
 
+  /* Cor de destaque (verde do Brasil) e estados de interface */
+  --color-accent: #0b7a4b;
+  --color-accent-strong: #075c38;
+  --color-accent-soft: #e3f3eb;
+
+  /* Cores das regiões (paleta categórica validada para daltonismo; ordem fixa N, NE, CO, SE, S) */
+  --color-region-n: #2a78d6;
+  --color-region-ne: #eb6834;
+  --color-region-co: #1baf7a;
+  --color-region-se: #eda100;
+  --color-region-s: #e87ba4;
+  --color-error: #b42318;
+  --color-error-soft: #fdecea;
+
+  /* Tipografia */
   --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+  --font-size-2xl: 2rem;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height: 1.5;
 
+  /* Espaçamentos (escala de 4px) */
+  --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
-  --space-lg: 2rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Bordas, sombras e largura máxima */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
+  --container-max-width: 75rem;
 }

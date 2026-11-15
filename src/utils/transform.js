@@ -1,4 +1,4 @@
-import { GDP_UNIT_MULTIPLIER } from '../config.js';
+import { GDP_UNIT_MULTIPLIER, LOCALE, REGIONS } from '../config.js';
 
 // Converte um valor do SIDRA (sempre texto) em número.
 // O SIDRA usa símbolos como "...", "-" ou "X" para dado ausente: nesses casos devolve null.
@@ -46,5 +46,72 @@ export function mergeStateData(states, populationResponse, gdpResponse) {
       gdp,
       gdpPerCapita: calculatePerCapita(gdp, population),
     };
+  });
+}
+
+// Soma uma propriedade numérica, ignorando valores ausentes (null)
+export function sumBy(items, key) {
+  return items.reduce((total, item) => total + (item[key] ?? 0), 0);
+}
+
+// Totais de um conjunto de estados (o Brasil inteiro ou uma região filtrada).
+// O per capita é PIB total ÷ população total, e não a média dos per capitas dos estados:
+// a média daria o mesmo peso a Roraima e a São Paulo.
+export function summarizeStates(states) {
+  const complete = states.filter((state) => state.population !== null && state.gdp !== null);
+
+  return {
+    stateCount: states.length,
+    population: sumBy(states, 'population'),
+    gdp: sumBy(states, 'gdp'),
+    gdpPerCapita: calculatePerCapita(sumBy(complete, 'gdp'), sumBy(complete, 'population')),
+  };
+}
+
+// Ordena os estados do maior para o menor valor do indicador, deixando de fora os sem dado.
+// Devolve um array novo, sem alterar o original.
+export function rankStates(states, indicator) {
+  return states
+    .filter((state) => state[indicator] !== null)
+    .sort((a, b) => b[indicator] - a[indicator]);
+}
+
+// Totais por região, sempre na ordem de REGIONS (regiões sem estados ficam de fora)
+export function groupByRegion(states) {
+  return REGIONS.map((region) => {
+    const regionStates = states.filter((state) => state.regionAcronym === region.acronym);
+    return { ...region, ...summarizeStates(regionStates) };
+  }).filter((region) => region.stateCount > 0);
+}
+
+// Tira acentos e deixa minúsculo, para "sao" encontrar "São Paulo"
+export function normalizeText(text) {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+// Filtra os estados pelo nome ou pela sigla; busca vazia devolve todos
+export function searchStates(states, query) {
+  const term = normalizeText(query);
+  if (term === '') return states;
+
+  return states.filter(
+    (state) => normalizeText(state.name).includes(term) || normalizeText(state.acronym) === term,
+  );
+}
+
+// Compara dois valores: textos em ordem alfabética do português, números do menor para o maior
+function compareValues(a, b) {
+  if (typeof a === 'string') return a.localeCompare(b, LOCALE);
+  return a - b;
+}
+
+// Ordena por qualquer coluna, em ordem 'asc' ou 'desc'. Valores null vão sempre para o fim.
+export function sortStates(states, key, direction = 'asc') {
+  const sign = direction === 'asc' ? 1 : -1;
+
+  return [...states].sort((a, b) => {
+    if (a[key] === null) return b[key] === null ? 0 : 1;
+    if (b[key] === null) return -1;
+    return sign * compareValues(a[key], b[key]);
   });
 }

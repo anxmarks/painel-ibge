@@ -1,5 +1,6 @@
 @import './variables.css';
 
+/* Base */
 *,
 *::before,
 *::after {
@@ -9,6 +10,306 @@
 body {
   margin: 0;
   font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height);
   color: var(--color-text);
   background: var(--color-bg);
+}
+
+a {
+  color: var(--color-accent);
+}
+
+/* Esconde visualmente, mas mantém para leitores de tela */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Layout (mobile first) */
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+.section {
+  margin-block: var(--space-xl);
+}
+
+/* Cabeçalho e rodapé */
+.site-header {
+  padding-block: var(--space-xl);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.site-subtitle {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-text-muted);
+}
+
+.site-footer {
+  padding-block: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Cards de KPI */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-md);
+}
+
+.kpi-card {
+  margin: 0;
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpi-label {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.kpi-value {
+  margin: var(--space-xs) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-detail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* Painéis dos gráficos */
+.charts-grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.panel {
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Altura fixa: o Chart.js ocupa 100% do container (maintainAspectRatio: false) */
+.chart-container {
+  position: relative;
+}
+
+.chart-container--ranking {
+  height: 40rem; /* 27 barras com espaço para os rótulos */
+}
+
+.chart-container--region {
+  height: 16rem;
+}
+
+/* Legenda da rosca */
+.legend {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.legend-swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 2px;
+}
+
+.legend-share {
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend-value {
+  min-width: 6rem;
+  color: var(--color-text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tabela de dados */
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table-toolbar .panel-title {
+  margin: 0;
+}
+
+.search-input {
+  width: 100%;
+  min-width: 15rem;
+  padding: var(--space-sm) var(--space-md);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.table-count {
+  margin: var(--space-sm) 0 var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* No celular a tabela rola na horizontal dentro do painel, sem empurrar a página */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-table thead th {
+  padding: 0;
+  border-bottom-width: 2px;
+}
+
+.data-table tbody th {
+  font-weight: var(--font-weight-semibold);
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-accent-soft);
+}
+
+.data-table .is-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sort-button {
+  display: inline-flex;
+  gap: var(--space-xs);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.is-numeric .sort-button {
+  justify-content: flex-end;
+}
+
+.sort-button:hover,
+th[aria-sort='ascending'] .sort-button,
+th[aria-sort='descending'] .sort-button {
+  color: var(--color-text);
+}
+
+.sort-arrow {
+  min-width: 0.75em;
+  font-size: 0.7em;
+}
+
+.state-acronym {
+  margin-left: var(--space-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+.empty-row {
+  padding-block: var(--space-xl);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Foco visível para quem navega pelo teclado */
+.sort-button:focus-visible,
+.search-input:focus-visible,
+.table-wrapper:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Mensagens de estado (erro, dados vazios) */
+.status-message {
+  padding: var(--space-md);
+  color: var(--color-error);
+  background: var(--color-error-soft);
+  border-radius: var(--radius-md);
+}
+
+@media (min-width: 48rem) {
+  .container {
+    padding-inline: var(--space-xl);
+  }
+
+  .site-title {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+/* Telas largas: ranking e rosca lado a lado */
+@media (min-width: 64rem) {
+  .charts-grid {
+    grid-template-columns: 3fr 2fr;
+    align-items: start;
+  }
 }
