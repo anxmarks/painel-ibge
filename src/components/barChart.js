@@ -65,6 +65,8 @@ export function createBarChart({ canvas, title }) {
     chart.data.labels = ranked.map((state) => state.acronym);
     dataset.data = ranked.map((state) => state[indicator]);
     dataset.states = ranked;
+    // O CSS usa esse número para dar a altura certa ao gráfico; o Chart.js percebe o novo tamanho
+    canvas.parentElement.style.setProperty('--bar-count', ranked.length);
     chart.update();
 
     title.textContent = `Ranking dos estados por ${INDICATORS[indicator].label}`;

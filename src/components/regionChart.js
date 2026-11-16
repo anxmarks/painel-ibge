@@ -55,7 +55,7 @@ export function createRegionChart({ canvas, legend, title }) {
     dataset.shares = shares;
     chart.update();
 
-    title.textContent = `Participação das regiões no ${INDICATORS[indicator].label}`;
+    title.textContent = `Participação das regiões ${INDICATORS[indicator].shareOf}`;
     legend.innerHTML = regions
       .map((region, index) => legendItemTemplate(region, shares[index], indicator))
       .join('');

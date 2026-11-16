@@ -21,6 +21,10 @@
   --color-error: #b42318;
   --color-error-soft: #fdecea;
 
+  /* Skeleton de carregamento (cinza base e o brilho que passa por cima) */
+  --color-skeleton: #e9ecef;
+  --color-skeleton-highlight: #f5f6f8;
+
   /* Tipografia */
   --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-size-sm: 0.875rem;

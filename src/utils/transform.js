@@ -1,4 +1,4 @@
-import { GDP_UNIT_MULTIPLIER, LOCALE, REGIONS } from '../config.js';
+import { ALL_REGIONS, GDP_UNIT_MULTIPLIER, LOCALE, REGIONS } from '../config.js';
 
 // Converte um valor do SIDRA (sempre texto) em número.
 // O SIDRA usa símbolos como "...", "-" ou "X" para dado ausente: nesses casos devolve null.
@@ -82,6 +82,12 @@ export function groupByRegion(states) {
     const regionStates = states.filter((state) => state.regionAcronym === region.acronym);
     return { ...region, ...summarizeStates(regionStates) };
   }).filter((region) => region.stateCount > 0);
+}
+
+// Mantém só os estados da região escolhida; ALL_REGIONS devolve todos
+export function filterByRegion(states, regionAcronym) {
+  if (regionAcronym === ALL_REGIONS) return states;
+  return states.filter((state) => state.regionAcronym === regionAcronym);
 }
 
 // Tira acentos e deixa minúsculo, para "sao" encontrar "São Paulo"
