@@ -67,6 +67,35 @@ a {
   border-top: 1px solid var(--color-border);
 }
 
+/* Filtros (uma linha acima de tudo o que eles afetam) */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.filter-field {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: var(--space-xs);
+}
+
+.filter-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.select {
+  padding: var(--space-sm) var(--space-md);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
 /* Cards de KPI */
 .kpi-grid {
   display: grid;
@@ -129,8 +158,13 @@ a {
   position: relative;
 }
 
+/* A altura acompanha o número de barras (--bar-count vem do barChart.js):
+   com o filtro de região, 4 estados não ficam com barras gigantes */
 .chart-container--ranking {
-  height: 40rem; /* 27 barras com espaço para os rótulos */
+  --bar-height: 1.4rem;
+  --axis-space: 3rem;
+
+  height: max(10rem, calc(var(--bar-count, 27) * var(--bar-height) + var(--axis-space)));
 }
 
 .chart-container--region {
@@ -185,9 +219,19 @@ a {
   margin: 0;
 }
 
+/* Busca e botão de exportar lado a lado; no celular, o botão desce se não couber */
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.search-field {
+  flex: 1 1 15rem;
+}
+
 .search-input {
   width: 100%;
-  min-width: 15rem;
   padding: var(--space-sm) var(--space-md);
   font: inherit;
   color: var(--color-text);
@@ -283,17 +327,134 @@ th[aria-sort='descending'] .sort-button {
 /* Foco visível para quem navega pelo teclado */
 .sort-button:focus-visible,
 .search-input:focus-visible,
+.select:focus-visible,
+.button:focus-visible,
 .table-wrapper:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Mensagens de estado (erro, dados vazios) */
-.status-message {
-  padding: var(--space-md);
+/* Controles ficam desabilitados até os dados chegarem */
+.select:disabled,
+.search-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Skeleton: blocos cinza com um brilho passando, no lugar do conteúdo que ainda vai chegar */
+.skeleton,
+main[data-status='loading'] .chart-container::after {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton) 25%,
+    var(--color-skeleton-highlight) 50%,
+    var(--color-skeleton) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-value {
+  width: 60%;
+  height: 1.2em;
+}
+
+.skeleton-text {
+  width: 80%;
+  height: 1em;
+}
+
+.is-numeric .skeleton-text {
+  margin-left: auto;
+}
+
+/* Ao tentar de novo, a legenda antiga some até os dados novos chegarem */
+main[data-status='loading'] .legend {
+  visibility: hidden;
+}
+
+/* Nos gráficos, o bloco cobre o canvas inteiro enquanto carrega */
+main[data-status='loading'] .chart-container::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Quem pediu menos movimento no sistema vê os blocos parados */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  main[data-status='loading'] .chart-container::after {
+    animation: none;
+  }
+}
+
+/* Erro: esconde o painel vazio e mostra só a mensagem com o botão de tentar de novo */
+main[data-status='error'] > .section {
+  display: none;
+}
+
+.error-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+  justify-content: space-between;
+  margin-block: var(--space-xl);
+  padding: var(--space-lg);
   color: var(--color-error);
   background: var(--color-error-soft);
   border-radius: var(--radius-md);
+}
+
+.error-panel[hidden] {
+  display: none;
+}
+
+.error-message {
+  margin: 0;
+}
+
+.button {
+  padding: var(--space-sm) var(--space-lg);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-surface);
+  background: var(--color-accent);
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-accent-strong);
+}
+
+/* Botão secundário: contorno verde, para não competir com o conteúdo */
+.button--secondary {
+  color: var(--color-accent-strong);
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+}
+
+.button--secondary:hover {
+  background: var(--color-accent-soft);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @media (min-width: 48rem) {
@@ -303,6 +464,11 @@ th[aria-sort='descending'] .sort-button {
 
   .site-title {
     font-size: var(--font-size-2xl);
+  }
+
+  /* Em telas maiores os filtros não precisam ocupar a linha toda */
+  .filter-field {
+    flex: 0 1 16rem;
   }
 }
 

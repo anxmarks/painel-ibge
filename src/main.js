@@ -1,15 +1,40 @@
 import './styles/main.css';
-import { DEFAULT_RANKING_INDICATOR, DEFAULT_REGION_INDICATOR } from './config.js';
+import {
+  ALL_REGIONS,
+  DEFAULT_INDICATOR,
+  FALLBACK_REGION_INDICATOR,
+  INDICATORS,
+  REGIONS,
+} from './config.js';
 import { fetchStates, fetchPopulation, fetchGdp } from './services/ibgeApi.js';
-import { mergeStateData, summarizeStates } from './utils/transform.js';
-import { renderKpiCards } from './components/kpiCards.js';
+import { filterByRegion, mergeStateData, summarizeStates } from './utils/transform.js';
+import { createStore } from './state.js';
+import { renderKpiCards, renderKpiSkeleton } from './components/kpiCards.js';
 import { applyChartDefaults } from './components/chartTheme.js';
 import { createBarChart } from './components/barChart.js';
 import { createRegionChart } from './components/regionChart.js';
 import { createDataTable } from './components/dataTable.js';
+import { createFilters } from './components/filters.js';
+import { buildCsvFilename, buildStatesCsv, downloadCsv } from './utils/exportCsv.js';
 
+const main = document.querySelector('main');
 const kpiContainer = document.querySelector('#kpi-cards');
-const statusMessage = document.querySelector('#status-message');
+const kpiTitle = document.querySelector('#kpi-title');
+const loadingMessage = document.querySelector('#loading-message');
+const errorPanel = document.querySelector('#error-panel');
+const errorMessage = document.querySelector('#error-message');
+const retryButton = document.querySelector('#retry-button');
+const dataControls = document.querySelectorAll('[data-requires-data]');
+
+// Estado inicial: carregando, sem dados ainda, Brasil inteiro, indicador padrão.
+// status pode ser 'loading', 'ready' ou 'error'.
+const store = createStore({
+  status: 'loading',
+  errorMessage: '',
+  states: [],
+  region: ALL_REGIONS,
+  indicator: DEFAULT_INDICATOR,
+});
 
 // Busca as três respostas em paralelo e junta em um único array de estados
 async function loadStates() {
@@ -21,41 +46,98 @@ async function loadStates() {
   return mergeStateData(states, population, gdp);
 }
 
-function showError(message) {
-  statusMessage.textContent = message;
-  statusMessage.hidden = false;
+function regionName(acronym) {
+  return REGIONS.find((region) => region.acronym === acronym)?.name ?? 'Brasil';
 }
 
-async function init() {
+// Reflete o status na página: o CSS usa data-status; leitores de tela, aria-busy e as mensagens
+function renderStatus({ status, errorMessage: message }) {
+  main.dataset.status = status;
+  main.setAttribute('aria-busy', String(status === 'loading'));
+  dataControls.forEach((control) => {
+    control.disabled = status !== 'ready';
+  });
+
+  loadingMessage.textContent = status === 'loading' ? 'Carregando dados do IBGE…' : '';
+  errorPanel.hidden = status !== 'error';
+  errorMessage.textContent = message;
+}
+
+// Cria os componentes uma vez e devolve a função que redesenha todos a partir do estado
+function setupDashboard() {
+  applyChartDefaults();
+
+  const filters = createFilters({
+    regionSelect: document.querySelector('#region-filter'),
+    indicatorSelect: document.querySelector('#indicator-filter'),
+    onChange: (changes) => store.setState(changes),
+  });
+  const rankingChart = createBarChart({
+    canvas: document.querySelector('#ranking-chart'),
+    title: document.querySelector('#ranking-title'),
+  });
+  const regionChart = createRegionChart({
+    canvas: document.querySelector('#region-chart'),
+    legend: document.querySelector('#region-legend'),
+    title: document.querySelector('#region-title'),
+  });
+  const dataTable = createDataTable({
+    table: document.querySelector('#states-table'),
+    searchInput: document.querySelector('#state-search'),
+    resultCount: document.querySelector('#table-count'),
+  });
+
+  // Exporta exatamente o que a tabela mostra: região filtrada, busca e ordenação
+  document.querySelector('#export-button').addEventListener('click', () => {
+    const csv = buildStatesCsv(dataTable.getVisibleStates());
+    downloadCsv(csv, buildCsvFilename(store.getState().region));
+  });
+
+  return function render(state) {
+    renderStatus(state);
+
+    if (state.status === 'loading') {
+      renderKpiSkeleton(kpiContainer);
+      dataTable.showLoading();
+    }
+    if (state.status !== 'ready') return;
+
+    const { states, region, indicator } = state;
+    const visibleStates = filterByRegion(states, region);
+
+    filters.update({ region, indicator });
+    kpiTitle.textContent = `Resumo: ${regionName(region)}`;
+    renderKpiCards(kpiContainer, summarizeStates(visibleStates));
+    rankingChart.update(visibleStates, indicator);
+    dataTable.update(visibleStates);
+
+    // A rosca sempre mostra o Brasil inteiro, para dar contexto à região filtrada.
+    // PIB per capita não pode ser somado entre regiões, então nesse caso ela mostra o PIB.
+    const regionIndicator = INDICATORS[indicator].additive ? indicator : FALLBACK_REGION_INDICATOR;
+    regionChart.update(states, regionIndicator);
+  };
+}
+
+// Busca os dados e muda o status conforme o resultado. Também é usada pelo botão "Tentar novamente".
+async function loadData() {
+  store.setState({ status: 'loading', errorMessage: '' });
   try {
-    const states = await loadStates();
-
-    renderKpiCards(kpiContainer, summarizeStates(states));
-
-    applyChartDefaults();
-    const rankingChart = createBarChart({
-      canvas: document.querySelector('#ranking-chart'),
-      title: document.querySelector('#ranking-title'),
-    });
-    const regionChart = createRegionChart({
-      canvas: document.querySelector('#region-chart'),
-      legend: document.querySelector('#region-legend'),
-      title: document.querySelector('#region-title'),
-    });
-
-    const dataTable = createDataTable({
-      table: document.querySelector('#states-table'),
-      searchInput: document.querySelector('#state-search'),
-      resultCount: document.querySelector('#table-count'),
-    });
-
-    rankingChart.update(states, DEFAULT_RANKING_INDICATOR);
-    regionChart.update(states, DEFAULT_REGION_INDICATOR);
-    dataTable.update(states);
+    store.setState({ status: 'ready', states: await loadStates() });
   } catch (error) {
     console.error(error);
-    showError(`${error.message} Tente recarregar a página em alguns instantes.`);
+    store.setState({
+      status: 'error',
+      errorMessage: `${error.message} Verifique sua conexão e tente de novo.`,
+    });
   }
+}
+
+function init() {
+  const render = setupDashboard();
+  store.subscribe(render);
+  render(store.getState()); // primeira pintura: o skeleton aparece antes de qualquer resposta
+  retryButton.addEventListener('click', loadData);
+  loadData();
 }
 
 init();

@@ -1,4 +1,4 @@
-import { INDICATORS } from '../config.js';
+import { INDICATORS, SKELETON_TABLE_ROWS } from '../config.js';
 import { searchStates, sortStates } from '../utils/transform.js';
 import { formatIndicator } from '../utils/format.js';
 
@@ -64,12 +64,13 @@ export function createDataTable({ table, searchInput, resultCount }) {
     `;
   }
 
+  // Os estados que a tabela mostra agora: com a busca e a ordenação aplicadas
+  function getVisibleStates() {
+    return sortStates(searchStates(allStates, searchInput.value), sortKey, sortDirection);
+  }
+
   function renderBody() {
-    const visibleStates = sortStates(
-      searchStates(allStates, searchInput.value),
-      sortKey,
-      sortDirection,
-    );
+    const visibleStates = getVisibleStates();
 
     tbody.innerHTML =
       visibleStates.length > 0
@@ -85,7 +86,18 @@ export function createDataTable({ table, searchInput, resultCount }) {
     renderBody();
   }
 
-  return { update };
+  // Linhas de carregamento: o cabeçalho já aparece e o corpo mostra blocos animados
+  function showLoading() {
+    const cells = COLUMNS.map(
+      (column) =>
+        `<td class="${column.numeric ? 'is-numeric' : ''}"><span class="skeleton skeleton-text"></span></td>`,
+    ).join('');
+
+    tbody.innerHTML = `<tr aria-hidden="true">${cells}</tr>`.repeat(SKELETON_TABLE_ROWS);
+    resultCount.textContent = '';
+  }
+
+  return { update, showLoading, getVisibleStates };
 }
 
 function rowTemplate(state) {

@@ -8,10 +8,12 @@ import {
   summarizeStates,
   rankStates,
   groupByRegion,
+  filterByRegion,
   normalizeText,
   searchStates,
   sortStates,
 } from '../src/utils/transform.js';
+import { ALL_REGIONS } from '../src/config.js';
 
 // Monta uma resposta no mesmo formato aninhado do SIDRA
 function sidraResponse(values) {
@@ -174,6 +176,22 @@ describe('groupByRegion', () => {
       gdp: 400,
       gdpPerCapita: 10,
     });
+  });
+});
+
+describe('filterByRegion', () => {
+  const sample = [
+    { acronym: 'SP', regionAcronym: 'SE' },
+    { acronym: 'BA', regionAcronym: 'NE' },
+    { acronym: 'RJ', regionAcronym: 'SE' },
+  ];
+
+  it('mantém só os estados da região', () => {
+    expect(filterByRegion(sample, 'SE').map((state) => state.acronym)).toEqual(['SP', 'RJ']);
+  });
+
+  it('devolve todos os estados com ALL_REGIONS', () => {
+    expect(filterByRegion(sample, ALL_REGIONS)).toHaveLength(3);
   });
 });
 

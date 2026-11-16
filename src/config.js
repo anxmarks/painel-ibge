@@ -25,17 +25,23 @@ export const REGIONS = [
   { acronym: 'S', name: 'Sul' },
 ];
 
+// Valor do filtro de região que mostra o Brasil inteiro
+export const ALL_REGIONS = 'all';
+
 // Indicadores disponíveis no painel (a chave é o nome da propriedade em cada estado).
 // "additive" diz se faz sentido somar os estados: PIB per capita não soma, então não vai para a rosca.
+// "shareOf" completa o título da rosca ("Participação das regiões no PIB").
 export const INDICATORS = {
-  population: { label: 'População', additive: true },
-  gdp: { label: 'PIB', additive: true },
+  population: { label: 'População', additive: true, shareOf: 'na população' },
+  gdp: { label: 'PIB', additive: true, shareOf: 'no PIB' },
   gdpPerCapita: { label: 'PIB per capita', additive: false },
 };
 
-// Indicadores iniciais dos gráficos (os filtros da Etapa 4 vão poder trocar)
-export const DEFAULT_RANKING_INDICATOR = 'gdpPerCapita';
-export const DEFAULT_REGION_INDICATOR = 'gdp';
+// Indicador inicial do filtro
+export const DEFAULT_INDICATOR = 'gdpPerCapita';
+
+// A rosca usa este indicador quando o escolhido não pode ser somado (PIB per capita)
+export const FALLBACK_REGION_INDICATOR = 'gdp';
 
 // Formatação de números e moeda
 export const LOCALE = 'pt-BR';
@@ -46,3 +52,10 @@ export const MISSING_VALUE_LABEL = '—';
 // Mudar a versão do prefixo invalida o cache antigo (ex.: quando o formato dos dados muda).
 export const CACHE_KEY_PREFIX = 'brasil-em-dados:v1:';
 export const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+
+// Quantas linhas de "carregando" a tabela mostra enquanto os dados não chegam
+export const SKELETON_TABLE_ROWS = 6;
+
+// Exportação em CSV: ponto e vírgula é o separador que o Excel em português espera
+export const CSV_SEPARATOR = ';';
+export const CSV_FILENAME_PREFIX = 'brasil-em-dados';
