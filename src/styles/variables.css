@@ -1,5 +1,7 @@
 /* Design tokens: toda cor, fonte e espaçamento do painel sai daqui */
 :root {
+  color-scheme: light;
+
   /* Cores de superfície e texto */
   --color-bg: #f5f6f8;
   --color-surface: #ffffff;
@@ -50,4 +52,35 @@
   --radius-md: 0.75rem;
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
   --container-max-width: 75rem;
+}
+
+/* Tema escuro: só as cores mudam; tipografia e espaçamentos são os mesmos.
+   O atributo data-theme é colocado no <html> pelo script do index.html e pelo themeToggle.js. */
+:root[data-theme='dark'] {
+  color-scheme: dark; /* seletores, barras de rolagem e campos nativos também ficam escuros */
+
+  --color-bg: #0f1114;
+  --color-surface: #1a1d22;
+  --color-text: #e8eaed;
+  --color-text-muted: #a1a9b4;
+  --color-border: #2e343c;
+
+  /* No escuro o verde fica mais claro, e o "forte" (hover) clareia em vez de escurecer */
+  --color-accent: #34b57c;
+  --color-accent-strong: #5fd39c;
+  --color-accent-soft: #173026;
+
+  /* Mesmas cinco cores das regiões, em tons ajustados para o fundo escuro (validadas de novo) */
+  --color-region-n: #3987e5;
+  --color-region-ne: #d95926;
+  --color-region-co: #199e70;
+  --color-region-se: #c98500;
+  --color-region-s: #d55181;
+  --color-error: #ff8f84;
+  --color-error-soft: #3b1d1b;
+
+  --color-skeleton: #262b32;
+  --color-skeleton-highlight: #313740;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
 }

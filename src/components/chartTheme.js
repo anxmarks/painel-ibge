@@ -25,14 +25,33 @@ export function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// Aparência padrão de todos os gráficos, a partir dos tokens do variables.css
+// Duração padrão das animações do Chart.js, guardada para poder voltar a ela
+const defaultAnimationDuration = Chart.defaults.animation.duration;
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+// Aparência padrão de todos os gráficos, a partir dos tokens do variables.css.
+// É chamada de novo a cada troca de tema, porque os valores das variáveis mudam.
 export function applyChartDefaults() {
   Chart.defaults.font.family = cssVar('--font-family');
   Chart.defaults.color = cssVar('--color-text-muted');
   Chart.defaults.borderColor = cssVar('--color-border');
+  // Tooltip "invertido": fundo da cor do texto e texto da cor da superfície (funciona nos dois temas)
   Chart.defaults.plugins.tooltip.backgroundColor = cssVar('--color-text');
+  Chart.defaults.plugins.tooltip.titleColor = cssVar('--color-surface');
+  Chart.defaults.plugins.tooltip.bodyColor = cssVar('--color-surface');
+  // Quem pediu menos movimento no sistema vê os gráficos mudarem sem animação
+  Chart.defaults.animation.duration = reducedMotionQuery.matches ? 0 : defaultAnimationDuration;
   Chart.defaults.plugins.tooltip.padding = 10;
   Chart.defaults.plugins.tooltip.cornerRadius = 6;
+}
+
+// O Chart.js guarda em cache as opções dos eixos quando cria o gráfico, então mudar os
+// padrões acima não basta: na troca de tema, as cores dos eixos são passadas de novo aqui
+export function applyScaleColors(chart) {
+  Object.values(chart.options.scales ?? {}).forEach((scale) => {
+    scale.ticks.color = cssVar('--color-text-muted');
+    scale.grid.color = cssVar('--color-border');
+  });
 }
 
 export { Chart };

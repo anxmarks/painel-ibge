@@ -21,8 +21,7 @@ export function createRegionChart({ canvas, legend, title }) {
       cutout: '62%',
       datasets: {
         doughnut: {
-          borderColor: cssVar('--color-surface'), // 2px de respiro entre as fatias
-          borderWidth: 2,
+          borderWidth: 2, // 2px de respiro entre as fatias, na cor da superfície (definida no update)
           hoverOffset: 6,
         },
       },
@@ -51,7 +50,9 @@ export function createRegionChart({ canvas, legend, title }) {
 
     chart.data.labels = regions.map((region) => region.name);
     dataset.data = regions.map((region) => region[indicator]);
+    // As cores são lidas a cada update para acompanhar a troca de tema
     dataset.backgroundColor = regions.map((region) => regionColor(region.acronym));
+    dataset.borderColor = cssVar('--color-surface');
     dataset.shares = shares;
     chart.update();
 

@@ -15,6 +15,7 @@ import { createBarChart } from './components/barChart.js';
 import { createRegionChart } from './components/regionChart.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
+import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
 import { buildCsvFilename, buildStatesCsv, downloadCsv } from './utils/exportCsv.js';
 
 const main = document.querySelector('main');
@@ -34,6 +35,7 @@ const store = createStore({
   states: [],
   region: ALL_REGIONS,
   indicator: DEFAULT_INDICATOR,
+  theme: getActiveTheme(),
 });
 
 // Busca as três respostas em paralelo e junta em um único array de estados
@@ -65,7 +67,13 @@ function renderStatus({ status, errorMessage: message }) {
 
 // Cria os componentes uma vez e devolve a função que redesenha todos a partir do estado
 function setupDashboard() {
-  applyChartDefaults();
+  // Trocar o tema muda o estado; o render redesenha os gráficos com as cores novas
+  createThemeToggle({
+    button: document.querySelector('#theme-toggle'),
+    onChange: (theme) => store.setState({ theme }),
+  });
+
+  applyChartDefaults(); // precisa vir antes de criar os gráficos
 
   const filters = createFilters({
     regionSelect: document.querySelector('#region-filter'),
@@ -104,6 +112,8 @@ function setupDashboard() {
 
     const { states, region, indicator } = state;
     const visibleStates = filterByRegion(states, region);
+
+    applyChartDefaults(); // relê as cores do tema atual antes de atualizar os gráficos
 
     filters.update({ region, indicator });
     kpiTitle.textContent = `Resumo: ${regionName(region)}`;

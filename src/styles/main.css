@@ -30,6 +30,29 @@ a {
   white-space: nowrap;
 }
 
+/* Link "Pular para o conteúdo": escondido acima da tela, aparece quando recebe foco pelo Tab */
+.skip-link {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 10;
+  padding: var(--space-sm) var(--space-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-surface);
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* O <main> recebe foco pelo link acima, mas não precisa de contorno */
+main:focus {
+  outline: none;
+}
+
 /* Layout (mobile first) */
 .container {
   width: 100%;
@@ -47,6 +70,47 @@ a {
   padding-block: var(--space-xl);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+}
+
+.header-content {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Botão de tema: só ícone, com área de toque de 44px */
+.theme-toggle {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--color-accent-soft);
+}
+
+.theme-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* No claro aparece a lua (ir para o escuro); no escuro, o sol (voltar para o claro) */
+:root[data-theme='dark'] .theme-icon--moon,
+:root:not([data-theme='dark']) .theme-icon--sun {
+  display: none;
 }
 
 .site-title {
@@ -97,9 +161,9 @@ a {
 }
 
 /* Cards de KPI */
+/* Um card por linha no celular; três lado a lado a partir do tablet (nunca 2 + 1 sozinho) */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-md);
 }
 
@@ -140,6 +204,8 @@ a {
 }
 
 .panel {
+  /* Sem isto, o <canvas> (300px de largura mínima) empurra o painel para fora da tela em 360px */
+  min-width: 0;
   padding: var(--space-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -256,11 +322,14 @@ a {
   border-collapse: collapse;
   font-size: var(--font-size-sm);
   white-space: nowrap;
+
+  /* Espaço lateral das células: menor em telas estreitas, para a tabela caber sem rolar */
+  --cell-padding-inline: var(--space-sm);
 }
 
 .data-table th,
 .data-table td {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--cell-padding-inline);
   text-align: left;
   border-bottom: 1px solid var(--color-border);
 }
@@ -288,7 +357,7 @@ a {
   gap: var(--space-xs);
   align-items: center;
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--cell-padding-inline);
   font: inherit;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
@@ -329,6 +398,7 @@ th[aria-sort='descending'] .sort-button {
 .search-input:focus-visible,
 .select:focus-visible,
 .button:focus-visible,
+.theme-toggle:focus-visible,
 .table-wrapper:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -356,18 +426,22 @@ main[data-status='loading'] .chart-container::after {
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
+/* Blocos de texto ficam "dentro" da linha (inline-block): assim a linha mantém a mesma altura
+   do texto real e nada pula quando os números chegam. Nas células numéricas, o text-align
+   da própria célula já alinha o bloco à direita. */
+.skeleton-value,
+.skeleton-text {
+  display: inline-block;
+  height: 1em;
+  vertical-align: middle;
+}
+
 .skeleton-value {
   width: 60%;
-  height: 1.2em;
 }
 
 .skeleton-text {
   width: 80%;
-  height: 1em;
-}
-
-.is-numeric .skeleton-text {
-  margin-left: auto;
 }
 
 /* Ao tentar de novo, a legenda antiga some até os dados novos chegarem */
@@ -470,6 +544,13 @@ main[data-status='error'] > .section {
   .filter-field {
     flex: 0 1 16rem;
   }
+
+  .kpi-grid {
+    grid-template-columns: repeat(
+      3,
+      minmax(0, 1fr)
+    ); /* minmax(0, ...) deixa os três com a mesma largura */
+  }
 }
 
 /* Telas largas: ranking e rosca lado a lado */
@@ -477,5 +558,9 @@ main[data-status='error'] > .section {
   .charts-grid {
     grid-template-columns: 3fr 2fr;
     align-items: start;
+  }
+
+  .data-table {
+    --cell-padding-inline: var(--space-md);
   }
 }
