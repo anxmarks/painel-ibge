@@ -1,0 +1,42 @@
+# Integração contínua: a cada push e a cada PR, confere formatação, lint e testes.
+# Se algum passo falhar, o GitHub marca o commit/PR com um X vermelho.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Um novo push na mesma branch cancela a execução anterior, que já ficou velha
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint e testes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v5
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm # reaproveita o cache do npm entre execuções
+
+      - name: Instalar dependências
+        run: npm ci # instala exatamente o que está no package-lock.json
+
+      - name: Conferir formatação (Prettier)
+        run: npm run format:check
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Testes (Vitest)
+        run: npm test -- --run # --run executa uma vez, sem modo watch
+
+      - name: Build
+        run: npm run build
