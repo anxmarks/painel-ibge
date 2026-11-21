@@ -1,4 +1,4 @@
-import { Chart, cssVar } from './chartTheme.js';
+import { Chart, applyScaleColors, cssVar } from './chartTheme.js';
 import { INDICATORS } from '../config.js';
 import { rankStates } from '../utils/transform.js';
 import { formatIndicator } from '../utils/format.js';
@@ -16,8 +16,6 @@ export function createBarChart({ canvas, title }) {
       maintainAspectRatio: false,
       datasets: {
         bar: {
-          backgroundColor: cssVar('--color-accent'),
-          hoverBackgroundColor: cssVar('--color-accent-strong'),
           borderRadius: 4,
           borderSkipped: 'start', // arredonda só a ponta da barra, não a base
           categoryPercentage: 0.85,
@@ -65,6 +63,10 @@ export function createBarChart({ canvas, title }) {
     chart.data.labels = ranked.map((state) => state.acronym);
     dataset.data = ranked.map((state) => state[indicator]);
     dataset.states = ranked;
+    // As cores são lidas a cada update para acompanhar a troca de tema
+    dataset.backgroundColor = cssVar('--color-accent');
+    dataset.hoverBackgroundColor = cssVar('--color-accent-strong');
+    applyScaleColors(chart);
     // O CSS usa esse número para dar a altura certa ao gráfico; o Chart.js percebe o novo tamanho
     canvas.parentElement.style.setProperty('--bar-count', ranked.length);
     chart.update();

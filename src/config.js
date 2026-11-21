@@ -59,3 +59,7 @@ export const SKELETON_TABLE_ROWS = 6;
 // Exportação em CSV: ponto e vírgula é o separador que o Excel em português espera
 export const CSV_SEPARATOR = ';';
 export const CSV_FILENAME_PREFIX = 'brasil-em-dados';
+
+// Tema escolhido pela pessoa ('light' ou 'dark'). Sem escolha salva, o painel segue o sistema.
+// Atenção: o script no <head> do index.html usa a mesma chave.
+export const THEME_STORAGE_KEY = 'brasil-em-dados:theme';
