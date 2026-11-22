@@ -14,6 +14,10 @@ export const AGGREGATES = {
   area: { id: 4714, variable: 6318 }, // Censo 2022: área da unidade territorial (km²)
 };
 
+// Série histórica do PIB: todos os anos que a tabela 5938 tem (Contas Regionais, referência 2010).
+// Quando o IBGE publicar um ano novo, basta mudar "lastYear".
+export const GDP_SERIES_YEARS = { firstYear: 2002, lastYear: 2023 };
+
 // O PIB vem em mil reais; multiplicar por este fator converte para reais
 export const GDP_UNIT_MULTIPLIER = 1000;
 

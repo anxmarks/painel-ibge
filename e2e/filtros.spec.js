@@ -42,7 +42,7 @@ test('densidade demográfica: ranking por hab/km² e a rosca mostra o PIB', asyn
   ).toBeVisible();
   // Densidade não soma entre regiões, então a rosca continua mostrando o PIB
   await expect(
-    page.getByRole('heading', { name: 'Participação das regiões no PIB' }),
+    page.getByRole('heading', { name: 'Participação das regiões no PIB', exact: true }),
   ).toBeVisible();
 
   // A tabela ganhou a coluna; ordenando, o DF (o mais denso) vem primeiro

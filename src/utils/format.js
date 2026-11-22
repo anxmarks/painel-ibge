@@ -56,6 +56,29 @@ export function formatPercent(value) {
   return formatWith(percentFormatter, value);
 }
 
+const shareFormatter = new Intl.NumberFormat(LOCALE, {
+  style: 'percent',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+// Participação sempre com uma casa: 0.53 -> "53,0%" (lado a lado com "57,4%", não parece outro número)
+export function formatShare(value) {
+  return formatWith(shareFormatter, value);
+}
+
+const percentagePointFormatter = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: 'exceptZero',
+});
+
+// Diferença entre duas participações (0.574 - 0.530 = 0.044) em pontos percentuais: "+4,4 p.p."
+export function formatPercentagePoints(difference) {
+  if (!Number.isFinite(difference)) return MISSING_VALUE_LABEL;
+  return `${percentagePointFormatter.format(difference * 100)} p.p.`;
+}
+
 const densityFormatter = new Intl.NumberFormat(LOCALE, {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,

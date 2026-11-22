@@ -135,6 +135,25 @@
         </div>
       </section>
 
+      <section class="section panel" aria-labelledby="history-title">
+        <h2 id="history-title" class="panel-title">Evolução da participação das regiões no PIB</h2>
+        <p class="panel-note">
+          Em % do PIB do Brasil de cada ano. Comparar a participação, e não o PIB em reais, tira o
+          efeito da inflação.
+        </p>
+        <div class="chart-container chart-container--history">
+          <canvas id="history-chart" role="img" aria-label="Gráfico de linha"></canvas>
+        </div>
+        <p id="history-legend-caption" class="legend-caption">
+          Participação no primeiro e no último ano, e a variação em pontos percentuais (p.p.)
+        </p>
+        <ul
+          id="history-legend"
+          class="legend legend--history"
+          aria-labelledby="history-legend-caption"
+        ></ul>
+      </section>
+
       <section class="section panel" aria-labelledby="table-title">
         <div class="table-toolbar">
           <h2 id="table-title" class="panel-title">Dados por estado</h2>

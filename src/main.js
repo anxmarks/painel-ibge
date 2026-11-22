@@ -3,17 +3,24 @@ import { FALLBACK_REGION_INDICATOR, INDICATORS, REGIONS } from './config.js';
 import {
   fetchArea,
   fetchGdp,
+  fetchGdpSeries,
   fetchPopulation,
   fetchStateMesh,
   fetchStates,
 } from './services/ibgeApi.js';
-import { filterByRegion, mergeStateData, summarizeStates } from './utils/transform.js';
+import {
+  buildRegionShareSeries,
+  filterByRegion,
+  mergeStateData,
+  summarizeStates,
+} from './utils/transform.js';
 import { createStore } from './state.js';
 import { renderKpiCards, renderKpiSkeleton } from './components/kpiCards.js';
 import { applyChartDefaults } from './components/chartTheme.js';
 import { createBarChart } from './components/barChart.js';
 import { createRegionChart } from './components/regionChart.js';
 import { createStateMap } from './components/stateMap.js';
+import { createHistoryChart } from './components/historyChart.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
@@ -36,20 +43,24 @@ const store = createStore({
   errorMessage: '',
   states: [],
   mesh: null, // contornos dos estados para o mapa (GeoJSON)
+  history: null, // participação de cada região no PIB, ano a ano
   ...parseFiltersFromSearch(window.location.search),
   theme: getActiveTheme(),
 });
 
 // Busca tudo em paralelo: os dados viram um único array de estados; a malha vai direto para o mapa
+// e a série do PIB vira a participação de cada região por ano
 async function loadDashboardData() {
-  const [states, population, gdp, area, mesh] = await Promise.all([
+  const [rawStates, population, gdp, area, mesh, gdpSeries] = await Promise.all([
     fetchStates(),
     fetchPopulation(),
     fetchGdp(),
     fetchArea(),
     fetchStateMesh(),
+    fetchGdpSeries(),
   ]);
-  return { states: mergeStateData(states, population, gdp, area), mesh };
+  const states = mergeStateData(rawStates, population, gdp, area);
+  return { states, mesh, history: buildRegionShareSeries(states, gdpSeries) };
 }
 
 function regionName(acronym) {
@@ -101,6 +112,11 @@ function setupDashboard() {
     note: document.querySelector('#map-note'),
     tooltip: document.querySelector('#map-tooltip'),
   });
+  const historyChart = createHistoryChart({
+    canvas: document.querySelector('#history-chart'),
+    legend: document.querySelector('#history-legend'),
+    title: document.querySelector('#history-title'),
+  });
   const dataTable = createDataTable({
     table: document.querySelector('#states-table'),
     searchInput: document.querySelector('#state-search'),
@@ -122,7 +138,7 @@ function setupDashboard() {
     }
     if (state.status !== 'ready') return;
 
-    const { states, mesh, region, indicator } = state;
+    const { states, mesh, history, region, indicator } = state;
     const visibleStates = filterByRegion(states, region);
 
     applyChartDefaults(); // relê as cores do tema atual antes de atualizar os gráficos
@@ -140,6 +156,9 @@ function setupDashboard() {
 
     // O mapa também recebe todos os estados: os de fora da região ficam cinza, como contexto
     stateMap.update({ states, mesh, indicator, region });
+
+    // A série histórica é sempre do PIB, por região; a região filtrada fica em destaque
+    historyChart.update({ history, region });
   };
 }
 

@@ -8,10 +8,12 @@ function readFixture(name) {
   return readFileSync(new URL(`../fixtures/${name}.json`, import.meta.url), 'utf8');
 }
 
-// Trecho da URL -> arquivo de fixture (os códigos são os mesmos do src/config.js)
+// Trecho da URL -> arquivo de fixture (os códigos e anos são os mesmos do src/config.js)
 const FIXTURES = [
   { urlPart: '/v1/localidades/estados', body: readFixture('states') },
   { urlPart: '/v3/agregados/4709/', body: readFixture('population') },
+  // A série do PIB usa a mesma tabela do PIB, então vem antes: vale a primeira que combinar
+  { urlPart: '/v3/agregados/5938/periodos/2002-2023/', body: readFixture('gdp-series') },
   { urlPart: '/v3/agregados/5938/', body: readFixture('gdp') },
   { urlPart: '/v3/agregados/4714/', body: readFixture('area') },
   { urlPart: '/v3/malhas/', body: readFixture('mesh') },

@@ -20,6 +20,18 @@ export function parseAggregateSeries(response) {
   );
 }
 
+// Desaninha uma série com vários anos em um Map { id do estado -> Map { ano -> valor } }
+export function parseAggregateTimeSeries(response) {
+  const series = response?.[0]?.resultados?.[0]?.series ?? [];
+
+  return new Map(
+    series.map(({ localidade, serie }) => [
+      Number(localidade.id),
+      new Map(Object.entries(serie).map(([year, value]) => [Number(year), parseSidraValue(value)])),
+    ]),
+  );
+}
+
 // Divisão que devolve null quando falta algum dado (ou quando o divisor é zero)
 function divide(numerator, denominator) {
   if (numerator === null || !denominator) return null;
@@ -138,4 +150,33 @@ export function sortStates(states, key, direction = 'asc') {
     if (b[key] === null) return -1;
     return sign * compareValues(a[key], b[key]);
   });
+}
+
+// Participação de cada região no PIB do Brasil, ano a ano (de 0 a 1).
+// Participação, e não o PIB em reais: o PIB está a preços correntes, e em reais a inflação
+// faria todas as linhas subirem juntas. A participação compara as regiões dentro do mesmo ano.
+// O total de cada ano soma só os estados com dado naquele ano.
+export function buildRegionShareSeries(states, gdpSeriesResponse) {
+  const gdpById = parseAggregateTimeSeries(gdpSeriesResponse);
+  const years = [...new Set([...gdpById.values()].flatMap((byYear) => [...byYear.keys()]))].sort(
+    (a, b) => a - b,
+  );
+  const regionOf = new Map(states.map((state) => [state.id, state.regionAcronym]));
+
+  const regions = REGIONS.map((region) => ({ ...region, shares: [] }));
+  for (const year of years) {
+    const totals = new Map(REGIONS.map((region) => [region.acronym, 0]));
+    let brazilTotal = 0;
+    for (const [id, byYear] of gdpById) {
+      const value = byYear.get(year);
+      if (value === null || value === undefined || !totals.has(regionOf.get(id))) continue;
+      totals.set(regionOf.get(id), totals.get(regionOf.get(id)) + value);
+      brazilTotal += value;
+    }
+    for (const region of regions) {
+      region.shares.push(divide(totals.get(region.acronym), brazilTotal));
+    }
+  }
+
+  return { years, regions };
 }

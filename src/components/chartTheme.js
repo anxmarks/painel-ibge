@@ -6,6 +6,9 @@ import {
   LinearScale,
   DoughnutController,
   ArcElement,
+  LineController,
+  LineElement,
+  PointElement,
   Tooltip,
 } from 'chart.js';
 
@@ -17,6 +20,9 @@ Chart.register(
   LinearScale,
   DoughnutController,
   ArcElement,
+  LineController,
+  LineElement,
+  PointElement,
   Tooltip,
 );
 
