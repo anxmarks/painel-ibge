@@ -1,11 +1,5 @@
 import './styles/main.css';
-import {
-  ALL_REGIONS,
-  DEFAULT_INDICATOR,
-  FALLBACK_REGION_INDICATOR,
-  INDICATORS,
-  REGIONS,
-} from './config.js';
+import { FALLBACK_REGION_INDICATOR, INDICATORS, REGIONS } from './config.js';
 import { fetchStates, fetchPopulation, fetchGdp } from './services/ibgeApi.js';
 import { filterByRegion, mergeStateData, summarizeStates } from './utils/transform.js';
 import { createStore } from './state.js';
@@ -17,6 +11,7 @@ import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
 import { buildCsvFilename, buildStatesCsv, downloadCsv } from './utils/exportCsv.js';
+import { buildSearchFromFilters, parseFiltersFromSearch } from './utils/urlState.js';
 
 const main = document.querySelector('main');
 const kpiContainer = document.querySelector('#kpi-cards');
@@ -27,14 +22,13 @@ const errorMessage = document.querySelector('#error-message');
 const retryButton = document.querySelector('#retry-button');
 const dataControls = document.querySelectorAll('[data-requires-data]');
 
-// Estado inicial: carregando, sem dados ainda, Brasil inteiro, indicador padrão.
-// status pode ser 'loading', 'ready' ou 'error'.
+// Estado inicial: carregando, sem dados ainda e com os filtros que vierem na URL
+// (sem parâmetros, Brasil inteiro e indicador padrão). status pode ser 'loading', 'ready' ou 'error'.
 const store = createStore({
   status: 'loading',
   errorMessage: '',
   states: [],
-  region: ALL_REGIONS,
-  indicator: DEFAULT_INDICATOR,
+  ...parseFiltersFromSearch(window.location.search),
   theme: getActiveTheme(),
 });
 
@@ -142,9 +136,37 @@ async function loadData() {
   }
 }
 
+function urlFor(search) {
+  return `${window.location.pathname}${search}${window.location.hash}`;
+}
+
+// Mantém a URL igual aos filtros. Cada mudança vira uma entrada no histórico,
+// então o botão "voltar" do navegador desfaz o último filtro.
+function syncUrl({ region, indicator }) {
+  const search = buildSearchFromFilters({ region, indicator });
+  if (search === window.location.search) return; // nada mudou (ou a mudança veio do próprio "voltar")
+  window.history.pushState(null, '', urlFor(search));
+}
+
+// Link com valor inválido (ex.: ?regiao=XX) ou parâmetros estranhos: corrige a URL
+// sem criar entrada no histórico, senão o "voltar" levaria de novo ao link quebrado
+function normalizeUrl({ region, indicator }) {
+  window.history.replaceState(null, '', urlFor(buildSearchFromFilters({ region, indicator })));
+}
+
+// "Voltar" e "avançar" trocam a URL sem recarregar: aí é o estado que segue a URL
+function listenToHistory() {
+  window.addEventListener('popstate', () => {
+    store.setState(parseFiltersFromSearch(window.location.search));
+  });
+}
+
 function init() {
   const render = setupDashboard();
   store.subscribe(render);
+  normalizeUrl(store.getState());
+  store.subscribe(syncUrl);
+  listenToHistory();
   render(store.getState()); // primeira pintura: o skeleton aparece antes de qualquer resposta
   retryButton.addEventListener('click', loadData);
   loadData();
