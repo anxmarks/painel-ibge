@@ -22,6 +22,8 @@ const STATE_COLUMNS = [
   { header: 'População', value: (state) => formatCsvNumber(state.population, 0) },
   { header: 'PIB (R$)', value: (state) => formatCsvNumber(state.gdp, 0) },
   { header: 'PIB per capita (R$)', value: (state) => formatCsvNumber(state.gdpPerCapita, 2) },
+  { header: 'Área (km²)', value: (state) => formatCsvNumber(state.area, 3) },
+  { header: 'Densidade (hab/km²)', value: (state) => formatCsvNumber(state.density, 2) },
 ];
 
 // Campos com separador, aspas ou quebra de linha vão entre aspas, e as aspas internas são dobradas

@@ -13,6 +13,7 @@ const FIXTURES = [
   { urlPart: '/v1/localidades/estados', body: readFixture('states') },
   { urlPart: '/v3/agregados/4709/', body: readFixture('population') },
   { urlPart: '/v3/agregados/5938/', body: readFixture('gdp') },
+  { urlPart: '/v3/agregados/4714/', body: readFixture('area') },
 ];
 
 // Responde a API com as fixtures; qualquer URL inesperada falha, para o teste não ir à internet

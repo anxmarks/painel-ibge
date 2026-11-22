@@ -49,5 +49,6 @@ test('exporta em CSV exatamente o que a tabela mostra', async ({ page }) => {
   expect(content.startsWith('﻿')).toBe(true); // BOM: o Excel reconhece os acentos
   expect(lines).toHaveLength(4); // cabeçalho + 3 estados do Sul
   expect(lines[0]).toContain('Sigla;Estado;Região');
+  expect(lines[0]).toContain('Densidade (hab/km²)');
   expect(content).toContain('Santa Catarina');
 });

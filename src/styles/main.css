@@ -545,16 +545,19 @@ main[data-status='error'] > .section {
     flex: 0 1 16rem;
   }
 
+  /* Tablet: os quatro cards em 2 × 2. minmax(0, ...) deixa todos com a mesma largura */
   .kpi-grid {
-    grid-template-columns: repeat(
-      3,
-      minmax(0, 1fr)
-    ); /* minmax(0, ...) deixa os três com a mesma largura */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* Telas largas: ranking e rosca lado a lado */
 @media (min-width: 64rem) {
+  /* Desktop: os quatro cards lado a lado */
+  .kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .charts-grid {
     grid-template-columns: 3fr 2fr;
     align-items: start;

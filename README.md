@@ -13,7 +13,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/preview-dark.png" />
-  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB e PIB per capita, ranking dos estados em barras, participação das regiões em gráfico de rosca e tabela de dados por estado." width="800" />
+  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca e tabela de dados por estado." width="800" />
 </picture>
 
 ---
@@ -36,7 +36,7 @@
 
 ## 💡 Sobre o projeto
 
-O **Brasil em Dados** transforma dados públicos do IBGE em visualizações claras e interativas. Dá para comparar estados, filtrar por região e explorar população, PIB e PIB per capita de 2022.
+O **Brasil em Dados** transforma dados públicos do IBGE em visualizações claras e interativas. Dá para comparar estados, filtrar por região e explorar população, PIB, PIB per capita e densidade demográfica de 2022.
 
 O painel foi feito **sem framework**, de propósito: o objetivo era dominar os fundamentos do JavaScript (DOM, módulos, estado, assincronismo) antes de partir para React.
 
@@ -44,7 +44,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 
 ## ✨ Funcionalidades
 
-- **Cards de KPI** com população total, PIB total e PIB per capita da seleção
+- **Cards de KPI** com população total, PIB total, PIB per capita e densidade demográfica da seleção
 - **Ranking dos estados** em gráfico de barras, pelo indicador escolhido
 - **Participação das regiões** (N, NE, CO, SE, S) em gráfico de rosca, com legenda que traz porcentagem e valor
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
@@ -77,13 +77,19 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 
 Os dados vêm da **[API de Serviço de Dados do IBGE](https://servicodados.ibge.gov.br/api/docs)**, pública, gratuita e sem autenticação.
 
-| Dado                        | Endpoint                                                                    |
-| --------------------------- | --------------------------------------------------------------------------- |
-| Estados e regiões           | `GET /api/v1/localidades/estados`                                           |
-| População residente (Censo) | `GET /api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N3[all]` |
-| PIB a preços correntes      | `GET /api/v3/agregados/5938/periodos/2022/variaveis/37?localidades=N3[all]` |
+| Dado                        | Endpoint                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| Estados e regiões           | `GET /api/v1/localidades/estados`                                             |
+| População residente (Censo) | `GET /api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N3[all]`   |
+| PIB a preços correntes      | `GET /api/v3/agregados/5938/periodos/2022/variaveis/37?localidades=N3[all]`   |
+| Área territorial (Censo)    | `GET /api/v3/agregados/4714/periodos/2022/variaveis/6318?localidades=N3[all]` |
 
-População e PIB usam **o mesmo ano (2022)**, para que a divisão faça sentido. O **PIB per capita** é calculado no front-end (`PIB ÷ população`), e o PIB, que a API entrega em mil reais, é convertido para reais.
+Todos os dados são do **mesmo ano (2022)**, para que as divisões façam sentido. Dois indicadores são calculados no front-end:
+
+- **PIB per capita** = `PIB ÷ população` (o PIB, que a API entrega em mil reais, é convertido para reais)
+- **Densidade demográfica** = `população ÷ área`, em habitantes por km². O resultado bate com a densidade oficial do IBGE (variável 614), com diferença só no arredondamento.
+
+Nos totais do Brasil e das regiões, as duas razões são calculadas sobre as somas (ex.: população total ÷ área total), e não como média dos estados, que daria o mesmo peso a Roraima e a São Paulo.
 
 ---
 
@@ -159,7 +165,7 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **78 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita, formatação, cache, store, filtros na URL e geração do CSV.
+- **87 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL e geração do CSV.
 - **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
@@ -180,6 +186,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 **Interface como função do estado.** Com um store central e uma única função `render(estado)`, carregamento, erro, filtros e tema passaram a ser só valores no estado. Isso deixou fácil implementar o botão "Tentar novamente" e garantir que tudo na tela fica sempre consistente.
 
 **Testes que não dependem da internet.** Nos testes de ponta a ponta, o Playwright intercepta as chamadas à API do IBGE e responde com dados reais salvos no repositório. Assim os testes são rápidos, dão sempre o mesmo resultado e ainda permitem simular a API fora do ar para testar a tela de erro. Para confirmar que os testes realmente protegem o código, desliguei de propósito a sincronização com a URL e vi o teste falhar.
+
+**Uma arquitetura que aguenta crescer.** Para testar se a separação em camadas funcionava de verdade, adicionei a densidade demográfica depois que o painel já estava pronto. Foram cerca de 90 linhas de código de produção, cada uma no seu lugar: o código da tabela do SIDRA no `config.js`, uma busca a mais no `services/`, uma função pura no `transform.js`, um formatador e um card. O gráfico de barras, os filtros, a URL e a ordenação da tabela passaram a funcionar com o indicador novo sem mudar nada. No caminho, um teste revelou que a função `formatInteger` não arredondava, um bug antigo que só apareceu com um dado novo.
 
 **O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
 

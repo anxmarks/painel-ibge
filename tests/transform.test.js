@@ -3,6 +3,7 @@ import {
   parseSidraValue,
   parseAggregateSeries,
   calculatePerCapita,
+  calculateDensity,
   mergeStateData,
   sumBy,
   summarizeStates,
@@ -73,12 +74,25 @@ describe('calculatePerCapita', () => {
   });
 });
 
+describe('calculateDensity', () => {
+  it('divide a população pela área', () => {
+    expect(calculateDensity(1000, 40)).toBe(25);
+  });
+
+  it('devolve null quando falta população ou área', () => {
+    expect(calculateDensity(null, 40)).toBeNull();
+    expect(calculateDensity(1000, null)).toBeNull();
+    expect(calculateDensity(1000, 0)).toBeNull();
+  });
+});
+
 describe('mergeStateData', () => {
-  it('junta estados, população e PIB e converte o PIB para reais', () => {
+  it('junta estados, população, PIB e área e calcula os indicadores derivados', () => {
     const result = mergeStateData(
       states,
       sidraResponse({ 11: '1000', 43: '2000' }),
       sidraResponse({ 11: '50', 43: '300' }),
+      sidraResponse({ 11: '40.5', 43: '100' }),
     );
 
     expect(result[0]).toEqual({
@@ -90,8 +104,11 @@ describe('mergeStateData', () => {
       population: 1000,
       gdp: 50000,
       gdpPerCapita: 50,
+      area: 40.5,
+      density: 1000 / 40.5,
     });
     expect(result[1].gdpPerCapita).toBe(150);
+    expect(result[1].density).toBe(20);
   });
 
   it('mantém o estado com null quando falta dado na API', () => {
@@ -99,10 +116,13 @@ describe('mergeStateData', () => {
       states,
       sidraResponse({ 11: '1000' }),
       sidraResponse({ 11: '...' }),
+      sidraResponse({ 11: '-' }),
     );
 
     expect(result[0].gdp).toBeNull();
     expect(result[0].gdpPerCapita).toBeNull();
+    expect(result[0].area).toBeNull();
+    expect(result[0].density).toBeNull();
     expect(result[1].population).toBeNull();
   });
 });
@@ -120,11 +140,36 @@ describe('sumBy', () => {
 describe('summarizeStates', () => {
   it('calcula o per capita pelo total, e não pela média dos estados', () => {
     const result = summarizeStates([
-      { population: 100, gdp: 1000 }, // per capita 10
-      { population: 900, gdp: 18000 }, // per capita 20
+      { population: 100, gdp: 1000, area: 10 }, // per capita 10, densidade 10
+      { population: 900, gdp: 18000, area: 90 }, // per capita 20, densidade 10
     ]);
 
-    expect(result).toEqual({ stateCount: 2, population: 1000, gdp: 19000, gdpPerCapita: 19 });
+    expect(result).toEqual({
+      stateCount: 2,
+      population: 1000,
+      gdp: 19000,
+      gdpPerCapita: 19,
+      area: 100,
+      density: 10,
+    });
+  });
+
+  it('calcula a densidade pelo total, e não pela média dos estados', () => {
+    const result = summarizeStates([
+      { population: 1000, gdp: 1, area: 10 }, // densidade 100 (estado pequeno e cheio)
+      { population: 1000, gdp: 1, area: 990 }, // densidade ~1 (estado grande e vazio)
+    ]);
+
+    expect(result.density).toBe(2); // 2000 pessoas ÷ 1000 km², e não (100 + 1) ÷ 2
+  });
+
+  it('deixa estados sem área fora do cálculo da densidade', () => {
+    const result = summarizeStates([
+      { population: 100, gdp: 1, area: 10 },
+      { population: 900, gdp: 1, area: null },
+    ]);
+
+    expect(result.density).toBe(10);
   });
 
   it('deixa estados sem PIB fora do cálculo do per capita', () => {

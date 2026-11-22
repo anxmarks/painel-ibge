@@ -11,6 +11,7 @@ export const STATES_LOCATION = 'N3[all]';
 export const AGGREGATES = {
   population: { id: 4709, variable: 93 }, // Censo 2022: população residente
   gdp: { id: 5938, variable: 37 }, // PIB a preços correntes (mil reais)
+  area: { id: 4714, variable: 6318 }, // Censo 2022: área da unidade territorial (km²)
 };
 
 // O PIB vem em mil reais; multiplicar por este fator converte para reais
@@ -29,12 +30,13 @@ export const REGIONS = [
 export const ALL_REGIONS = 'all';
 
 // Indicadores disponíveis no painel (a chave é o nome da propriedade em cada estado).
-// "additive" diz se faz sentido somar os estados: PIB per capita não soma, então não vai para a rosca.
+// "additive" diz se faz sentido somar os estados: PIB per capita e densidade não somam, então não vão para a rosca.
 // "shareOf" completa o título da rosca ("Participação das regiões no PIB").
 export const INDICATORS = {
   population: { label: 'População', additive: true, shareOf: 'na população' },
   gdp: { label: 'PIB', additive: true, shareOf: 'no PIB' },
   gdpPerCapita: { label: 'PIB per capita', additive: false },
+  density: { label: 'Densidade demográfica', additive: false },
 };
 
 // Indicador inicial do filtro

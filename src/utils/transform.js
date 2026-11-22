@@ -20,21 +20,33 @@ export function parseAggregateSeries(response) {
   );
 }
 
-// PIB per capita em reais; null quando falta algum dos dados
-export function calculatePerCapita(gdp, population) {
-  if (gdp === null || !population) return null;
-  return gdp / population;
+// Divisão que devolve null quando falta algum dado (ou quando o divisor é zero)
+function divide(numerator, denominator) {
+  if (numerator === null || !denominator) return null;
+  return numerator / denominator;
 }
 
-// Junta estados, população e PIB em um único array de objetos planos
-export function mergeStateData(states, populationResponse, gdpResponse) {
+// PIB per capita em reais; null quando falta algum dos dados
+export function calculatePerCapita(gdp, population) {
+  return divide(gdp, population);
+}
+
+// Densidade demográfica em habitantes por km²; null quando falta algum dos dados
+export function calculateDensity(population, area) {
+  return divide(population, area);
+}
+
+// Junta estados, população, PIB e área em um único array de objetos planos
+export function mergeStateData(states, populationResponse, gdpResponse, areaResponse) {
   const populationById = parseAggregateSeries(populationResponse);
   const gdpById = parseAggregateSeries(gdpResponse);
+  const areaById = parseAggregateSeries(areaResponse);
 
   return states.map((state) => {
     const population = populationById.get(state.id) ?? null;
     const gdpInThousands = gdpById.get(state.id) ?? null;
     const gdp = gdpInThousands === null ? null : gdpInThousands * GDP_UNIT_MULTIPLIER;
+    const area = areaById.get(state.id) ?? null;
 
     return {
       id: state.id,
@@ -45,6 +57,8 @@ export function mergeStateData(states, populationResponse, gdpResponse) {
       population,
       gdp,
       gdpPerCapita: calculatePerCapita(gdp, population),
+      area,
+      density: calculateDensity(population, area),
     };
   });
 }
@@ -56,15 +70,19 @@ export function sumBy(items, key) {
 
 // Totais de um conjunto de estados (o Brasil inteiro ou uma região filtrada).
 // O per capita é PIB total ÷ população total, e não a média dos per capitas dos estados:
-// a média daria o mesmo peso a Roraima e a São Paulo.
+// a média daria o mesmo peso a Roraima e a São Paulo. A densidade segue a mesma regra.
+// Cada razão usa só os estados que têm os dois dados, para numerador e divisor falarem dos mesmos estados.
 export function summarizeStates(states) {
-  const complete = states.filter((state) => state.population !== null && state.gdp !== null);
+  const withGdp = states.filter((state) => state.population !== null && state.gdp !== null);
+  const withArea = states.filter((state) => state.population !== null && state.area !== null);
 
   return {
     stateCount: states.length,
     population: sumBy(states, 'population'),
     gdp: sumBy(states, 'gdp'),
-    gdpPerCapita: calculatePerCapita(sumBy(complete, 'gdp'), sumBy(complete, 'population')),
+    gdpPerCapita: calculatePerCapita(sumBy(withGdp, 'gdp'), sumBy(withGdp, 'population')),
+    area: sumBy(states, 'area'),
+    density: calculateDensity(sumBy(withArea, 'population'), sumBy(withArea, 'area')),
   };
 }
 

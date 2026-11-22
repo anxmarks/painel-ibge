@@ -32,6 +32,26 @@ test('filtrar por região atualiza o painel e a URL; "voltar" desfaz', async ({ 
   await expect(page.locator('#states-table tbody tr')).toHaveCount(27);
 });
 
+test('densidade demográfica: ranking por hab/km² e a rosca mostra o PIB', async ({ page }) => {
+  await page.goto('./');
+  await page.getByLabel('Indicador').selectOption('density');
+
+  await expect(page).toHaveURL(/\?indicador=density$/);
+  await expect(
+    page.getByRole('heading', { name: 'Ranking dos estados por Densidade demográfica' }),
+  ).toBeVisible();
+  // Densidade não soma entre regiões, então a rosca continua mostrando o PIB
+  await expect(
+    page.getByRole('heading', { name: 'Participação das regiões no PIB' }),
+  ).toBeVisible();
+
+  // A tabela ganhou a coluna; ordenando, o DF (o mais denso) vem primeiro
+  const densityHeader = page.getByRole('columnheader', { name: 'Densidade demográfica' });
+  await densityHeader.getByRole('button').click();
+  await expect(page.locator('#states-table tbody tr').first()).toContainText('Distrito Federal');
+  await expect(page.locator('#states-table tbody tr').first()).toContainText('hab/km²');
+});
+
 test('um link com filtros já abre filtrado', async ({ page }) => {
   await page.goto('./?regiao=co&indicador=gdp');
 

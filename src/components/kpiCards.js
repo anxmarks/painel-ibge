@@ -1,11 +1,13 @@
 import {
+  formatArea,
   formatCompact,
   formatCompactCurrency,
   formatCurrency,
+  formatDensity,
   formatInteger,
 } from '../utils/format.js';
 
-// Os três cards: o rótulo é fixo; valor e detalhe são calculados a partir do resumo
+// Os quatro cards: o rótulo é fixo; valor e detalhe são calculados a partir do resumo
 const KPI_CARDS = [
   {
     label: 'População',
@@ -22,6 +24,11 @@ const KPI_CARDS = [
     value: (summary) => formatCurrency(summary.gdpPerCapita),
     detail: (summary) => `${summary.stateCount} estados`,
   },
+  {
+    label: 'Densidade demográfica',
+    value: (summary) => formatDensity(summary.density),
+    detail: (summary) => `em ${formatArea(summary.area)}`,
+  },
 ];
 
 // Monta o HTML de um card. Os textos vêm do próprio código e dos formatadores, nunca do usuário.
@@ -35,7 +42,7 @@ function cardTemplate({ label, value, detail }) {
   `;
 }
 
-// Desenha os três cards de resumo a partir dos totais calculados por summarizeStates
+// Desenha os cards de resumo a partir dos totais calculados por summarizeStates
 export function renderKpiCards(container, summary) {
   container.innerHTML = KPI_CARDS.map((card) =>
     cardTemplate({
