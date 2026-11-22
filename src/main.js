@@ -1,12 +1,19 @@
 import './styles/main.css';
 import { FALLBACK_REGION_INDICATOR, INDICATORS, REGIONS } from './config.js';
-import { fetchArea, fetchGdp, fetchPopulation, fetchStates } from './services/ibgeApi.js';
+import {
+  fetchArea,
+  fetchGdp,
+  fetchPopulation,
+  fetchStateMesh,
+  fetchStates,
+} from './services/ibgeApi.js';
 import { filterByRegion, mergeStateData, summarizeStates } from './utils/transform.js';
 import { createStore } from './state.js';
 import { renderKpiCards, renderKpiSkeleton } from './components/kpiCards.js';
 import { applyChartDefaults } from './components/chartTheme.js';
 import { createBarChart } from './components/barChart.js';
 import { createRegionChart } from './components/regionChart.js';
+import { createStateMap } from './components/stateMap.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
@@ -28,19 +35,21 @@ const store = createStore({
   status: 'loading',
   errorMessage: '',
   states: [],
+  mesh: null, // contornos dos estados para o mapa (GeoJSON)
   ...parseFiltersFromSearch(window.location.search),
   theme: getActiveTheme(),
 });
 
-// Busca as quatro respostas em paralelo e junta em um único array de estados
-async function loadStates() {
-  const [states, population, gdp, area] = await Promise.all([
+// Busca tudo em paralelo: os dados viram um único array de estados; a malha vai direto para o mapa
+async function loadDashboardData() {
+  const [states, population, gdp, area, mesh] = await Promise.all([
     fetchStates(),
     fetchPopulation(),
     fetchGdp(),
     fetchArea(),
+    fetchStateMesh(),
   ]);
-  return mergeStateData(states, population, gdp, area);
+  return { states: mergeStateData(states, population, gdp, area), mesh };
 }
 
 function regionName(acronym) {
@@ -84,6 +93,14 @@ function setupDashboard() {
     legend: document.querySelector('#region-legend'),
     title: document.querySelector('#region-title'),
   });
+  const stateMap = createStateMap({
+    svg: document.querySelector('#state-map'),
+    legend: document.querySelector('#map-legend'),
+    legendTitle: document.querySelector('#map-legend-title'),
+    title: document.querySelector('#map-title'),
+    note: document.querySelector('#map-note'),
+    tooltip: document.querySelector('#map-tooltip'),
+  });
   const dataTable = createDataTable({
     table: document.querySelector('#states-table'),
     searchInput: document.querySelector('#state-search'),
@@ -105,7 +122,7 @@ function setupDashboard() {
     }
     if (state.status !== 'ready') return;
 
-    const { states, region, indicator } = state;
+    const { states, mesh, region, indicator } = state;
     const visibleStates = filterByRegion(states, region);
 
     applyChartDefaults(); // relê as cores do tema atual antes de atualizar os gráficos
@@ -120,6 +137,9 @@ function setupDashboard() {
     // PIB per capita e densidade não podem ser somados entre regiões; nesses casos ela mostra o PIB.
     const regionIndicator = INDICATORS[indicator].additive ? indicator : FALLBACK_REGION_INDICATOR;
     regionChart.update(states, regionIndicator);
+
+    // O mapa também recebe todos os estados: os de fora da região ficam cinza, como contexto
+    stateMap.update({ states, mesh, indicator, region });
   };
 }
 
@@ -127,7 +147,7 @@ function setupDashboard() {
 async function loadData() {
   store.setState({ status: 'loading', errorMessage: '' });
   try {
-    store.setState({ status: 'ready', states: await loadStates() });
+    store.setState({ status: 'ready', ...(await loadDashboardData()) });
   } catch (error) {
     console.error(error);
     store.setState({

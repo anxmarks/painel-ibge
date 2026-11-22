@@ -32,11 +32,18 @@ export const ALL_REGIONS = 'all';
 // Indicadores disponíveis no painel (a chave é o nome da propriedade em cada estado).
 // "additive" diz se faz sentido somar os estados: PIB per capita e densidade não somam, então não vão para a rosca.
 // "shareOf" completa o título da rosca ("Participação das regiões no PIB").
+// "unit" aparece no título da legenda do mapa quando os números da legenda vão sem unidade.
+// "inSentence" é o nome com artigo, para usar no meio de uma frase ("o mapa mostra a densidade...").
 export const INDICATORS = {
   population: { label: 'População', additive: true, shareOf: 'na população' },
   gdp: { label: 'PIB', additive: true, shareOf: 'no PIB' },
-  gdpPerCapita: { label: 'PIB per capita', additive: false },
-  density: { label: 'Densidade demográfica', additive: false },
+  gdpPerCapita: { label: 'PIB per capita', additive: false, inSentence: 'o PIB per capita' },
+  density: {
+    label: 'Densidade demográfica',
+    additive: false,
+    unit: 'hab/km²',
+    inSentence: 'a densidade demográfica',
+  },
 };
 
 // Indicador inicial do filtro
@@ -69,3 +76,20 @@ export const THEME_STORAGE_KEY = 'brasil-em-dados:theme';
 // Nomes dos parâmetros da URL que guardam os filtros (ex.: ?regiao=NE&indicador=gdp).
 // Em português porque aparecem para quem usa o painel.
 export const URL_PARAMS = { region: 'regiao', indicator: 'indicador' };
+
+// Mapa coroplético.
+// Malha dos estados em GeoJSON. Qualidade "mínima" (~100 KB) basta para o tamanho do mapa na tela.
+export const MAP_MESH = {
+  path: '/v3/malhas/paises/BR',
+  params: { formato: 'application/vnd.geo+json', intrarregiao: 'UF', qualidade: 'minima' },
+};
+
+// Mapas pintam taxas, não totais: para cada indicador que é total, a taxa que o mapa mostra no lugar
+export const MAP_RATE_INDICATOR = { population: 'density', gdp: 'gdpPerCapita' };
+
+// Número de faixas de cor (cada uma tem uma cor --color-map-1 ... --color-map-5 no variables.css)
+export const MAP_CLASS_COUNT = 5;
+
+// Tamanho do desenho (viewBox do SVG); na tela, o SVG se ajusta à largura do painel
+export const MAP_SIZE = 600;
+export const MAP_PADDING = 8;

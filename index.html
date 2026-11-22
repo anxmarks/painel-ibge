@@ -119,6 +119,22 @@
         </section>
       </div>
 
+      <section class="section panel" aria-labelledby="map-title">
+        <h2 id="map-title" class="panel-title">Mapa dos estados</h2>
+        <p id="map-note" class="map-note"></p>
+        <div class="map-layout">
+          <!-- O SVG tem viewBox: o espaço do mapa já fica reservado antes dos dados chegarem -->
+          <div class="chart-container chart-container--map">
+            <svg id="state-map" class="state-map" role="img" aria-label="Mapa dos estados"></svg>
+            <div id="map-tooltip" class="map-tooltip" hidden></div>
+          </div>
+          <div>
+            <p id="map-legend-title" class="map-legend-title"></p>
+            <ul id="map-legend" class="map-legend" aria-labelledby="map-legend-title"></ul>
+          </div>
+        </div>
+      </section>
+
       <section class="section panel" aria-labelledby="table-title">
         <div class="table-toolbar">
           <h2 id="table-title" class="panel-title">Dados por estado</h2>

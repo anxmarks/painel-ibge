@@ -23,12 +23,12 @@ test('mostra o erro quando a API falha e recupera com "Tentar novamente"', async
   const alert = page.getByRole('alert');
   await expect(alert).toBeVisible();
   await expect(alert).toContainText('Não foi possível conectar à API do IBGE.');
-  await expect(page.getByLabel('Região')).toBeDisabled(); // sem dados, os filtros ficam bloqueados
+  await expect(page.getByLabel('Região', { exact: true })).toBeDisabled(); // sem dados, os filtros ficam bloqueados
 
   await mockIbgeApi(page); // a API "volta"
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
 
   await expect(alert).toBeHidden();
-  await expect(page.getByLabel('Região')).toBeEnabled();
+  await expect(page.getByLabel('Região', { exact: true })).toBeEnabled();
   await expect(page.locator('#states-table tbody tr')).toHaveCount(27);
 });

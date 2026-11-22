@@ -23,6 +23,16 @@
   --color-error: #b42318;
   --color-error-soft: #fdecea;
 
+  /* Mapa: escala sequencial de um tom só (o verde do painel), do valor mais baixo ao mais alto.
+     Validada: claridade sempre crescente e a faixa mais clara com pelo menos 2:1 sobre o fundo.
+     Não é azul porque o azul já significa "Norte" na rosca. */
+  --color-map-1: #7fc3a0;
+  --color-map-2: #55aa80;
+  --color-map-3: #2f9065;
+  --color-map-4: #18734b;
+  --color-map-5: #0a5034;
+  --color-map-muted: #e3e6ea; /* estados fora da região filtrada, só como contexto */
+
   /* Skeleton de carregamento (cinza base e o brilho que passa por cima) */
   --color-skeleton: #e9ecef;
   --color-skeleton-highlight: #f5f6f8;
@@ -78,6 +88,14 @@
   --color-region-s: #d55181;
   --color-error: #ff8f84;
   --color-error-soft: #3b1d1b;
+
+  /* No escuro a escala inverte: valor baixo fica perto do fundo (escuro) e valor alto, claro */
+  --color-map-1: #2b6047;
+  --color-map-2: #3a8460;
+  --color-map-3: #52a87c;
+  --color-map-4: #7ac89d;
+  --color-map-5: #b0e6c8;
+  --color-map-muted: #2e343c;
 
   --color-skeleton: #262b32;
   --color-skeleton-highlight: #313740;

@@ -1,4 +1,4 @@
-import { API_BASE_URL, REFERENCE_YEAR, STATES_LOCATION, AGGREGATES } from '../config.js';
+import { API_BASE_URL, REFERENCE_YEAR, STATES_LOCATION, AGGREGATES, MAP_MESH } from '../config.js';
 import { withCache } from './cache.js';
 
 // Busca uma URL e devolve o JSON, com mensagens de erro amigáveis
@@ -45,4 +45,11 @@ export function fetchGdp() {
 // Área territorial por estado, em km² (resposta bruta do SIDRA)
 export function fetchArea() {
   return withCache(`area:${REFERENCE_YEAR}`, () => fetchJson(buildAggregateUrl(AGGREGATES.area)));
+}
+
+// Contornos dos estados (GeoJSON) para o mapa. A malha quase nunca muda, então o cache ajuda muito.
+// URLSearchParams codifica o "+" de "vnd.geo+json" como %2B (um "+" cru viraria espaço na URL).
+export function fetchStateMesh() {
+  const query = new URLSearchParams(MAP_MESH.params);
+  return withCache('mesh:states', () => fetchJson(`${API_BASE_URL}${MAP_MESH.path}?${query}`));
 }

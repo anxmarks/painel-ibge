@@ -272,6 +272,97 @@ main:focus {
   font-variant-numeric: tabular-nums;
 }
 
+/* Mapa coroplético */
+.map-note {
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.map-note:empty {
+  display: none;
+}
+
+.map-layout {
+  display: grid;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+/* O Brasil é quase um quadrado: o mapa fica quadrado, com até 34rem */
+.chart-container--map {
+  width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+.map-legend-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.state-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.map-state {
+  stroke: var(--map-stroke, #fff);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  transition: fill 0.2s;
+}
+
+/* Estado sob o ponteiro: borda na cor do texto, para destacar sem mudar a cor da faixa */
+.map-state:hover {
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+.map-state.is-muted:hover {
+  stroke: var(--color-text-muted);
+}
+
+/* Caixinha com nome e valor; cores invertidas, como os tooltips dos gráficos */
+.map-tooltip {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-surface);
+  white-space: nowrap;
+  pointer-events: none; /* não "rouba" o ponteiro do mapa */
+  background: var(--color-text);
+  border-radius: var(--radius-sm);
+}
+
+.map-tooltip[hidden] {
+  display: none;
+}
+
+.map-legend {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-legend-item {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+main[data-status='loading'] .map-legend {
+  visibility: hidden;
+}
+
 /* Tabela de dados */
 .table-toolbar {
   display: flex;
@@ -534,6 +625,13 @@ main[data-status='error'] > .section {
 @media (min-width: 48rem) {
   .container {
     padding-inline: var(--space-xl);
+  }
+
+  /* Tablet em diante: legenda ao lado do mapa, os dois juntos no centro do painel */
+  .map-layout {
+    grid-template-columns: minmax(0, 34rem) auto;
+    gap: var(--space-xl);
+    justify-content: center;
   }
 
   .site-title {
