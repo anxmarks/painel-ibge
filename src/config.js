@@ -63,3 +63,7 @@ export const CSV_FILENAME_PREFIX = 'brasil-em-dados';
 // Tema escolhido pela pessoa ('light' ou 'dark'). Sem escolha salva, o painel segue o sistema.
 // Atenção: o script no <head> do index.html usa a mesma chave.
 export const THEME_STORAGE_KEY = 'brasil-em-dados:theme';
+
+// Nomes dos parâmetros da URL que guardam os filtros (ex.: ?regiao=NE&indicador=gdp).
+// Em português porque aparecem para quem usa o painel.
+export const URL_PARAMS = { region: 'regiao', indicator: 'indicador' };
