@@ -13,7 +13,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/preview-dark.png" />
-  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca e tabela de dados por estado." width="800" />
+  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil e tabela de dados por estado." width="800" />
 </picture>
 
 ---
@@ -47,6 +47,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Cards de KPI** com população total, PIB total, PIB per capita e densidade demográfica da seleção
 - **Ranking dos estados** em gráfico de barras, pelo indicador escolhido
 - **Participação das regiões** (N, NE, CO, SE, S) em gráfico de rosca, com legenda que traz porcentagem e valor
+- **Mapa coroplético** dos estados, em 5 faixas de cor, com nome e valor ao passar o mouse (ou tocar). Com uma região filtrada, os outros estados ficam cinza, como contexto
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
 - **Filtros** por região e por indicador, que atualizam o painel inteiro
 - **Estados de interface:** skeleton de carregamento, mensagem de erro com "Tentar novamente"
@@ -55,7 +56,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Exportação em CSV** do que a tabela está mostrando, pronta para abrir no Excel em português
 - **Responsivo e acessível:** testado em 360px, 768px e 1280px; navegação por teclado, link para pular ao conteúdo, `aria-label` nos gráficos, cores validadas para daltonismo
 
-**Lighthouse:** 99–100 em Performance e 100 em Acessibilidade, Boas Práticas e SEO.
+**Lighthouse:** Performance 96 no celular e 100 no desktop; 100 em Acessibilidade, Boas Práticas e SEO.
 
 ---
 
@@ -66,6 +67,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 | Linguagem   | JavaScript (ES Modules)                                                                         |
 | Build / Dev | [Vite](https://vitejs.dev/)                                                                     |
 | Gráficos    | [Chart.js](https://www.chartjs.org/)                                                            |
+| Mapa        | [d3-geo](https://d3js.org/d3-geo) (só a projeção; o desenho é SVG puro)                         |
 | Estilo      | CSS moderno (variáveis, Grid, Flexbox)                                                          |
 | Qualidade   | ESLint + Prettier                                                                               |
 | Testes      | [Vitest](https://vitest.dev/) (unidade) e [Playwright](https://playwright.dev/) (ponta a ponta) |
@@ -77,12 +79,13 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 
 Os dados vêm da **[API de Serviço de Dados do IBGE](https://servicodados.ibge.gov.br/api/docs)**, pública, gratuita e sem autenticação.
 
-| Dado                        | Endpoint                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| Estados e regiões           | `GET /api/v1/localidades/estados`                                             |
-| População residente (Censo) | `GET /api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N3[all]`   |
-| PIB a preços correntes      | `GET /api/v3/agregados/5938/periodos/2022/variaveis/37?localidades=N3[all]`   |
-| Área territorial (Censo)    | `GET /api/v3/agregados/4714/periodos/2022/variaveis/6318?localidades=N3[all]` |
+| Dado                        | Endpoint                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Estados e regiões           | `GET /api/v1/localidades/estados`                                                                |
+| População residente (Censo) | `GET /api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N3[all]`                      |
+| PIB a preços correntes      | `GET /api/v3/agregados/5938/periodos/2022/variaveis/37?localidades=N3[all]`                      |
+| Área territorial (Censo)    | `GET /api/v3/agregados/4714/periodos/2022/variaveis/6318?localidades=N3[all]`                    |
+| Contornos dos estados       | `GET /api/v3/malhas/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima` |
 
 Todos os dados são do **mesmo ano (2022)**, para que as divisões façam sentido. Dois indicadores são calculados no front-end:
 
@@ -122,9 +125,9 @@ painel-ibge/
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
-│   ├── components/         # kpiCards, barChart, regionChart, dataTable, filters, themeToggle, chartTheme
+│   ├── components/         # kpiCards, barChart, regionChart, stateMap, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
-│   ├── utils/              # transform, format (Intl pt-BR) e exportCsv
+│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState e map (faixas do mapa)
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
 │   ├── config.js
 │   ├── state.js
@@ -165,8 +168,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **87 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL e geração do CSV.
-- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **102 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV e as faixas e a geometria do mapa.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
 - **Fluxo de trabalho:** cada etapa do projeto foi uma branch e um Pull Request próprios, com commits no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/).
@@ -187,6 +190,15 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 **Testes que não dependem da internet.** Nos testes de ponta a ponta, o Playwright intercepta as chamadas à API do IBGE e responde com dados reais salvos no repositório. Assim os testes são rápidos, dão sempre o mesmo resultado e ainda permitem simular a API fora do ar para testar a tela de erro. Para confirmar que os testes realmente protegem o código, desliguei de propósito a sincronização com a URL e vi o teste falhar.
 
+**Um mapa que não engana.** Mapa coroplético tem armadilhas, e eu quis evitar as principais:
+
+- **Taxas, não totais.** Num mapa de população, os estados grandes parecem importantes só pelo tamanho. Por isso, quando o indicador escolhido é um total (população ou PIB), o mapa mostra a taxa correspondente (densidade ou PIB per capita) e avisa o motivo.
+- **Faixas por quantis.** A densidade vai de 2,5 (Amazonas) a 489 hab/km² (DF). Com faixas de tamanho igual, quase todos os estados cairiam na primeira. Com quantis, cada faixa tem cerca de 5 estados. As faixas são calculadas sempre com os 27 estados, então filtrar uma região não muda a cor de ninguém.
+- **Cores validadas.** Uma escala de um tom só (o verde do painel, e não o azul, que já significa "Norte" na rosca), conferida com um script: claridade sempre crescente e a faixa mais clara com pelo menos 2:1 de contraste com o fundo, nos dois temas.
+- **O sentido dos polígonos.** O primeiro desenho saiu errado porque o GeoJSON do IBGE segue o padrão RFC 7946 (anti-horário), e o d3-geo, que calcula numa esfera, lê esse sentido como "o globo inteiro menos o estado". A solução foi uma função pura, com teste, que inverte os anéis quando a área passa de meia esfera.
+
+Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador: no celular, o navegador dispara `pointerleave` assim que o dedo sai da tela, e a caixinha do estado sumia na hora do toque. E o Lighthouse mostrou que desenhar os contornos travava a página por mais tempo; separar o primeiro desenho numa tarefa própria e reduzir a precisão dos caminhos do SVG levou a nota de 93 para 96.
+
 **Uma arquitetura que aguenta crescer.** Para testar se a separação em camadas funcionava de verdade, adicionei a densidade demográfica depois que o painel já estava pronto. Foram cerca de 90 linhas de código de produção, cada uma no seu lugar: o código da tabela do SIDRA no `config.js`, uma busca a mais no `services/`, uma função pura no `transform.js`, um formatador e um card. O gráfico de barras, os filtros, a URL e a ordenação da tabela passaram a funcionar com o indicador novo sem mudar nada. No caminho, um teste revelou que a função `formatInteger` não arredondava, um bug antigo que só apareceu com um dado novo.
 
 **O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
@@ -195,7 +207,6 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## 🔮 Próximos passos
 
-- [ ] Mapa coroplético do Brasil (ex.: com Leaflet ou D3)
 - [ ] Série histórica com gráfico de linha
 - [ ] Novos indicadores (IDH, escolaridade, saneamento)
 - [ ] Versão em React + TypeScript

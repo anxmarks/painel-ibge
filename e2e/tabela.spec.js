@@ -35,7 +35,7 @@ test('ordena pela coluna clicada e inverte no segundo clique', async ({ page }) 
 });
 
 test('exporta em CSV exatamente o que a tabela mostra', async ({ page }) => {
-  await page.getByLabel('Região').selectOption('S');
+  await page.getByLabel('Região', { exact: true }).selectOption('S');
   await expect(rows(page)).toHaveCount(3);
 
   const downloadPromise = page.waitForEvent('download');
