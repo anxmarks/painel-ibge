@@ -237,6 +237,27 @@ main:focus {
   height: 16rem;
 }
 
+.chart-container--history {
+  height: 18rem;
+}
+
+/* Texto curto sob o título de um painel, explicando o que o gráfico mostra */
+.panel-note {
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.legend-caption {
+  margin: var(--space-lg) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.legend-caption + .legend {
+  margin-top: var(--space-sm);
+}
+
 /* Legenda da rosca */
 .legend {
   display: grid;
@@ -270,6 +291,17 @@ main:focus {
   color: var(--color-text-muted);
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Na série histórica, os números ("57,4% → 53,0%") nunca quebram de linha;
+   sem a largura mínima da rosca, tudo cabe numa linha mesmo em 360px */
+.legend--history .legend-share,
+.legend--history .legend-value {
+  white-space: nowrap;
+}
+
+.legend--history .legend-value {
+  min-width: auto;
 }
 
 /* Mapa coroplético */
@@ -536,7 +568,8 @@ main[data-status='loading'] .chart-container::after {
 }
 
 /* Ao tentar de novo, a legenda antiga some até os dados novos chegarem */
-main[data-status='loading'] .legend {
+main[data-status='loading'] .legend,
+main[data-status='loading'] .legend-caption {
   visibility: hidden;
 }
 

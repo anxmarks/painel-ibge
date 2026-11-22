@@ -13,7 +13,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/preview-dark.png" />
-  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil e tabela de dados por estado." width="800" />
+  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil e gráfico de linha com a participação das regiões no PIB de 2002 a 2023." width="800" />
 </picture>
 
 ---
@@ -48,6 +48,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Ranking dos estados** em gráfico de barras, pelo indicador escolhido
 - **Participação das regiões** (N, NE, CO, SE, S) em gráfico de rosca, com legenda que traz porcentagem e valor
 - **Mapa coroplético** dos estados, em 5 faixas de cor, com nome e valor ao passar o mouse (ou tocar). Com uma região filtrada, os outros estados ficam cinza, como contexto
+- **Série histórica** da participação de cada região no PIB, de 2002 a 2023, em gráfico de linha. A legenda mostra o primeiro e o último ano e a variação em pontos percentuais; com uma região filtrada, ela fica em destaque e as outras ficam cinza
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
 - **Filtros** por região e por indicador, que atualizam o painel inteiro
 - **Estados de interface:** skeleton de carregamento, mensagem de erro com "Tentar novamente"
@@ -84,10 +85,11 @@ Os dados vêm da **[API de Serviço de Dados do IBGE](https://servicodados.ibge.
 | Estados e regiões           | `GET /api/v1/localidades/estados`                                                                |
 | População residente (Censo) | `GET /api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N3[all]`                      |
 | PIB a preços correntes      | `GET /api/v3/agregados/5938/periodos/2022/variaveis/37?localidades=N3[all]`                      |
+| PIB, série histórica        | `GET /api/v3/agregados/5938/periodos/2002-2023/variaveis/37?localidades=N3[all]`                 |
 | Área territorial (Censo)    | `GET /api/v3/agregados/4714/periodos/2022/variaveis/6318?localidades=N3[all]`                    |
 | Contornos dos estados       | `GET /api/v3/malhas/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima` |
 
-Todos os dados são do **mesmo ano (2022)**, para que as divisões façam sentido. Dois indicadores são calculados no front-end:
+Os indicadores são todos do **mesmo ano (2022)**, para que as divisões façam sentido; só a série histórica usa todos os anos do PIB. Dois indicadores são calculados no front-end:
 
 - **PIB per capita** = `PIB ÷ população` (o PIB, que a API entrega em mil reais, é convertido para reais)
 - **Densidade demográfica** = `população ÷ área`, em habitantes por km². O resultado bate com a densidade oficial do IBGE (variável 614), com diferença só no arredondamento.
@@ -125,7 +127,7 @@ painel-ibge/
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
-│   ├── components/         # kpiCards, barChart, regionChart, stateMap, dataTable, filters, themeToggle, chartTheme
+│   ├── components/         # kpiCards, barChart, regionChart, stateMap, historyChart, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
 │   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState e map (faixas do mapa)
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
@@ -133,7 +135,7 @@ painel-ibge/
 │   ├── state.js
 │   └── main.js             # Ponto de entrada
 ├── e2e/                    # Playwright: fluxos no navegador, com a API simulada por fixtures
-├── tests/                  # Vitest: transform, format, cache, state, exportCsv, urlState
+├── tests/                  # Vitest: transform, format, cache, state, exportCsv, urlState, map, history
 ├── index.html
 └── vite.config.js
 ```
@@ -168,8 +170,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **102 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV e as faixas e a geometria do mapa.
-- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **114 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa e a participação das regiões ano a ano.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores e destaque da região), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
 - **Fluxo de trabalho:** cada etapa do projeto foi uma branch e um Pull Request próprios, com commits no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/).
@@ -199,6 +201,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador: no celular, o navegador dispara `pointerleave` assim que o dedo sai da tela, e a caixinha do estado sumia na hora do toque. E o Lighthouse mostrou que desenhar os contornos travava a página por mais tempo; separar o primeiro desenho numa tarefa própria e reduzir a precisão dos caminhos do SVG levou a nota de 93 para 96.
 
+**Uma série histórica honesta.** O PIB da API está a preços correntes. Em reais, de 2002 a 2023 todas as linhas subiriam juntas, e a maior parte da subida seria inflação, não crescimento. Por isso o gráfico mostra a **participação de cada região no PIB do Brasil** em cada ano: a inflação afeta o numerador e o divisor do mesmo jeito, e a comparação fica justa. O cálculo é uma função pura, com teste, que soma os estados de cada região e divide pelo total do ano. A história aparece: o Sudeste caiu de 57,4% para 53,0% e o Centro-Oeste foi o que mais ganhou (+2,0 p.p.). Para não virar um emaranhado de 27 linhas, o gráfico é por região, e o filtro destaca uma delas em vez de esconder as outras.
+
 **Uma arquitetura que aguenta crescer.** Para testar se a separação em camadas funcionava de verdade, adicionei a densidade demográfica depois que o painel já estava pronto. Foram cerca de 90 linhas de código de produção, cada uma no seu lugar: o código da tabela do SIDRA no `config.js`, uma busca a mais no `services/`, uma função pura no `transform.js`, um formatador e um card. O gráfico de barras, os filtros, a URL e a ordenação da tabela passaram a funcionar com o indicador novo sem mudar nada. No caminho, um teste revelou que a função `formatInteger` não arredondava, um bug antigo que só apareceu com um dado novo.
 
 **O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
@@ -207,7 +211,7 @@ Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador:
 
 ## 🔮 Próximos passos
 
-- [ ] Série histórica com gráfico de linha
+- [ ] Série histórica por estado, além da série por região
 - [ ] Novos indicadores (IDH, escolaridade, saneamento)
 - [ ] Versão em React + TypeScript
 

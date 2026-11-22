@@ -33,6 +33,9 @@
   --color-map-5: #0a5034;
   --color-map-muted: #e3e6ea; /* estados fora da região filtrada, só como contexto */
 
+  /* Linhas de contexto na série histórica (regiões fora do filtro): visíveis, mas sem chamar atenção */
+  --color-context-line: #b8bfc8;
+
   /* Skeleton de carregamento (cinza base e o brilho que passa por cima) */
   --color-skeleton: #e9ecef;
   --color-skeleton-highlight: #f5f6f8;
@@ -96,6 +99,8 @@
   --color-map-4: #7ac89d;
   --color-map-5: #b0e6c8;
   --color-map-muted: #2e343c;
+
+  --color-context-line: #4b535e;
 
   --color-skeleton: #262b32;
   --color-skeleton-highlight: #313740;

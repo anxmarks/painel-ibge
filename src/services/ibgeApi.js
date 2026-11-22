@@ -1,4 +1,11 @@
-import { API_BASE_URL, REFERENCE_YEAR, STATES_LOCATION, AGGREGATES, MAP_MESH } from '../config.js';
+import {
+  API_BASE_URL,
+  REFERENCE_YEAR,
+  STATES_LOCATION,
+  AGGREGATES,
+  GDP_SERIES_YEARS,
+  MAP_MESH,
+} from '../config.js';
 import { withCache } from './cache.js';
 
 // Busca uma URL e devolve o JSON, com mensagens de erro amigáveis
@@ -17,10 +24,11 @@ async function fetchJson(url) {
   return response.json();
 }
 
-// Monta a URL de uma variável de um agregado do SIDRA para todos os estados
-function buildAggregateUrl({ id, variable }) {
+// Monta a URL de uma variável de um agregado do SIDRA para todos os estados.
+// "periods" é um ano ("2022") ou um intervalo ("2002-2023").
+function buildAggregateUrl({ id, variable }, periods = REFERENCE_YEAR) {
   return (
-    `${API_BASE_URL}/v3/agregados/${id}/periodos/${REFERENCE_YEAR}` +
+    `${API_BASE_URL}/v3/agregados/${id}/periodos/${periods}` +
     `/variaveis/${variable}?localidades=${STATES_LOCATION}`
   );
 }
@@ -40,6 +48,14 @@ export function fetchPopulation() {
 // PIB por estado, em mil reais (resposta bruta do SIDRA)
 export function fetchGdp() {
   return withCache(`gdp:${REFERENCE_YEAR}`, () => fetchJson(buildAggregateUrl(AGGREGATES.gdp)));
+}
+
+// PIB por estado em todos os anos da série, em mil reais (resposta bruta do SIDRA)
+export function fetchGdpSeries() {
+  const periods = `${GDP_SERIES_YEARS.firstYear}-${GDP_SERIES_YEARS.lastYear}`;
+  return withCache(`gdp-series:${periods}`, () =>
+    fetchJson(buildAggregateUrl(AGGREGATES.gdp, periods)),
+  );
 }
 
 // Área territorial por estado, em km² (resposta bruta do SIDRA)
