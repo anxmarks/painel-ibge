@@ -41,3 +41,8 @@ export function fetchPopulation() {
 export function fetchGdp() {
   return withCache(`gdp:${REFERENCE_YEAR}`, () => fetchJson(buildAggregateUrl(AGGREGATES.gdp)));
 }
+
+// Área territorial por estado, em km² (resposta bruta do SIDRA)
+export function fetchArea() {
+  return withCache(`area:${REFERENCE_YEAR}`, () => fetchJson(buildAggregateUrl(AGGREGATES.area)));
+}

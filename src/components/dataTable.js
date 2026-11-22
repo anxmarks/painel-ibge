@@ -9,7 +9,11 @@ const COLUMNS = [
   { key: 'population', label: INDICATORS.population.label, numeric: true },
   { key: 'gdp', label: INDICATORS.gdp.label, numeric: true },
   { key: 'gdpPerCapita', label: INDICATORS.gdpPerCapita.label, numeric: true },
+  { key: 'density', label: INDICATORS.density.label, numeric: true },
 ];
+
+// As colunas numéricas são indicadores: cada célula usa o formatador do próprio indicador
+const NUMERIC_COLUMNS = COLUMNS.filter((column) => column.numeric);
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' };
 
@@ -105,9 +109,9 @@ function rowTemplate(state) {
     <tr>
       <th scope="row">${state.name} <span class="state-acronym">${state.acronym}</span></th>
       <td>${state.regionName}</td>
-      <td class="is-numeric">${formatIndicator('population', state.population)}</td>
-      <td class="is-numeric">${formatIndicator('gdp', state.gdp)}</td>
-      <td class="is-numeric">${formatIndicator('gdpPerCapita', state.gdpPerCapita)}</td>
+      ${NUMERIC_COLUMNS.map(
+        ({ key }) => `<td class="is-numeric">${formatIndicator(key, state[key])}</td>`,
+      ).join('')}
     </tr>
   `;
 }

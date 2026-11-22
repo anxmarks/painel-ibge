@@ -8,6 +8,7 @@ test('mostra o resumo do Brasil, os gráficos e os 27 estados', async ({ page })
   await expect(page.locator('main')).toHaveAttribute('data-status', 'ready');
   await expect(page.locator('#kpi-cards')).toContainText('203,1 mi');
   await expect(page.locator('#kpi-cards')).toContainText('R$ 10,08 tri');
+  await expect(page.locator('#kpi-cards')).toContainText('23,9 hab/km²');
   await expect(
     page.getByRole('heading', { name: 'Ranking dos estados por PIB per capita' }),
   ).toBeVisible();

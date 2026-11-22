@@ -1,7 +1,7 @@
 import { LOCALE, CURRENCY, MISSING_VALUE_LABEL } from '../config.js';
 
 // Os formatadores são criados uma vez só, porque criar um Intl.NumberFormat é caro
-const integerFormatter = new Intl.NumberFormat(LOCALE);
+const integerFormatter = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
 
 const compactFormatter = new Intl.NumberFormat(LOCALE, {
   notation: 'compact',
@@ -56,11 +56,29 @@ export function formatPercent(value) {
   return formatWith(percentFormatter, value);
 }
 
+const densityFormatter = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+// 23.857 -> "23,9 hab/km²"
+export function formatDensity(value) {
+  const number = formatWith(densityFormatter, value);
+  return number === MISSING_VALUE_LABEL ? number : `${number} hab/km²`;
+}
+
+// 8510345.5 -> "8,5 mi km²"
+export function formatArea(value) {
+  const number = formatCompact(value);
+  return number === MISSING_VALUE_LABEL ? number : `${number} km²`;
+}
+
 // Formatadores de cada indicador: "full" para tooltips e tabela, "short" para eixos
 const indicatorFormatters = {
   population: { full: formatInteger, short: formatCompact },
   gdp: { full: formatCompactCurrency, short: formatCompactCurrency },
   gdpPerCapita: { full: formatCurrency, short: formatCompactCurrency },
+  density: { full: formatDensity, short: formatInteger }, // no eixo, só o número ("489")
 };
 
 // Formata o valor de um indicador; short = true para versões curtas (eixos dos gráficos)

@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { FALLBACK_REGION_INDICATOR, INDICATORS, REGIONS } from './config.js';
-import { fetchStates, fetchPopulation, fetchGdp } from './services/ibgeApi.js';
+import { fetchArea, fetchGdp, fetchPopulation, fetchStates } from './services/ibgeApi.js';
 import { filterByRegion, mergeStateData, summarizeStates } from './utils/transform.js';
 import { createStore } from './state.js';
 import { renderKpiCards, renderKpiSkeleton } from './components/kpiCards.js';
@@ -32,14 +32,15 @@ const store = createStore({
   theme: getActiveTheme(),
 });
 
-// Busca as três respostas em paralelo e junta em um único array de estados
+// Busca as quatro respostas em paralelo e junta em um único array de estados
 async function loadStates() {
-  const [states, population, gdp] = await Promise.all([
+  const [states, population, gdp, area] = await Promise.all([
     fetchStates(),
     fetchPopulation(),
     fetchGdp(),
+    fetchArea(),
   ]);
-  return mergeStateData(states, population, gdp);
+  return mergeStateData(states, population, gdp, area);
 }
 
 function regionName(acronym) {
@@ -116,7 +117,7 @@ function setupDashboard() {
     dataTable.update(visibleStates);
 
     // A rosca sempre mostra o Brasil inteiro, para dar contexto à região filtrada.
-    // PIB per capita não pode ser somado entre regiões, então nesse caso ela mostra o PIB.
+    // PIB per capita e densidade não podem ser somados entre regiões; nesses casos ela mostra o PIB.
     const regionIndicator = INDICATORS[indicator].additive ? indicator : FALLBACK_REGION_INDICATOR;
     regionChart.update(states, regionIndicator);
   };

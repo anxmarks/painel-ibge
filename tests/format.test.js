@@ -6,6 +6,8 @@ import {
   formatCompactCurrency,
   formatPercent,
   formatIndicator,
+  formatDensity,
+  formatArea,
 } from '../src/utils/format.js';
 import { MISSING_VALUE_LABEL } from '../src/config.js';
 
@@ -53,11 +55,42 @@ describe('formatIndicator', () => {
   });
 });
 
+describe('formatInteger', () => {
+  it('arredonda para inteiro', () => {
+    expect(formatInteger(489.06)).toBe('489');
+  });
+});
+
+describe('formatDensity', () => {
+  it('mostra uma casa decimal e a unidade', () => {
+    expect(formatDensity(23.857)).toBe('23,9 hab/km²');
+  });
+
+  it('usa separador de milhar em valores grandes', () => {
+    expect(formatDensity(1234.5)).toBe('1.234,5 hab/km²');
+  });
+});
+
+describe('formatArea', () => {
+  it('usa a forma compacta e a unidade', () => {
+    expect(normalizeSpaces(formatArea(8510345.5))).toBe('8,5 mi km²');
+  });
+});
+
+describe('formatIndicator para densidade', () => {
+  it('mostra a unidade no formato completo e só o número no curto (eixo)', () => {
+    expect(formatIndicator('density', 489.06)).toBe('489,1 hab/km²');
+    expect(formatIndicator('density', 489.06, { short: true })).toBe('489');
+  });
+});
+
 describe('valores ausentes', () => {
   it.each([null, undefined, NaN, Infinity])('mostra o marcador de ausente para %s', (value) => {
     expect(formatInteger(value)).toBe(MISSING_VALUE_LABEL);
     expect(formatCompact(value)).toBe(MISSING_VALUE_LABEL);
     expect(formatCurrency(value)).toBe(MISSING_VALUE_LABEL);
     expect(formatCompactCurrency(value)).toBe(MISSING_VALUE_LABEL);
+    expect(formatDensity(value)).toBe(MISSING_VALUE_LABEL); // sem "hab/km²" sobrando
+    expect(formatArea(value)).toBe(MISSING_VALUE_LABEL);
   });
 });

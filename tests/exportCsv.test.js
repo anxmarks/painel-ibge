@@ -72,12 +72,14 @@ describe('buildStatesCsv', () => {
         population: 2817381,
         gdp: 328750000000,
         gdpPerCapita: 116688.123,
+        area: 5760.784,
+        density: 489.0627,
       },
     ]);
 
     expect(csv).toBe(
-      'Sigla;Estado;Região;População;PIB (R$);PIB per capita (R$)\r\n' +
-        'DF;Distrito Federal;Centro-Oeste;2817381;328750000000;116688,12',
+      'Sigla;Estado;Região;População;PIB (R$);PIB per capita (R$);Área (km²);Densidade (hab/km²)\r\n' +
+        'DF;Distrito Federal;Centro-Oeste;2817381;328750000000;116688,12;5760,784;489,06',
     );
   });
 });
