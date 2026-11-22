@@ -61,15 +61,15 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 
 ## 🛠 Tecnologias
 
-| Categoria   | Ferramenta                                                 |
-| ----------- | ---------------------------------------------------------- |
-| Linguagem   | JavaScript (ES Modules)                                    |
-| Build / Dev | [Vite](https://vitejs.dev/)                                |
-| Gráficos    | [Chart.js](https://www.chartjs.org/)                       |
-| Estilo      | CSS moderno (variáveis, Grid, Flexbox)                     |
-| Qualidade   | ESLint + Prettier                                          |
-| Testes      | [Vitest](https://vitest.dev/)                              |
-| CI / Deploy | GitHub Actions + [GitHub Pages](https://pages.github.com/) |
+| Categoria   | Ferramenta                                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| Linguagem   | JavaScript (ES Modules)                                                                         |
+| Build / Dev | [Vite](https://vitejs.dev/)                                                                     |
+| Gráficos    | [Chart.js](https://www.chartjs.org/)                                                            |
+| Estilo      | CSS moderno (variáveis, Grid, Flexbox)                                                          |
+| Qualidade   | ESLint + Prettier                                                                               |
+| Testes      | [Vitest](https://vitest.dev/) (unidade) e [Playwright](https://playwright.dev/) (ponta a ponta) |
+| CI / Deploy | GitHub Actions + [GitHub Pages](https://pages.github.com/)                                      |
 
 ---
 
@@ -123,7 +123,8 @@ painel-ibge/
 │   ├── config.js
 │   ├── state.js
 │   └── main.js             # Ponto de entrada
-├── tests/                  # Vitest: transform, format, cache, state, exportCsv
+├── e2e/                    # Playwright: fluxos no navegador, com a API simulada por fixtures
+├── tests/                  # Vitest: transform, format, cache, state, exportCsv, urlState
 ├── index.html
 └── vite.config.js
 ```
@@ -143,22 +144,24 @@ npm run dev
 
 O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/` é o mesmo do GitHub Pages).
 
-| Script                 | Descrição                             |
-| ---------------------- | ------------------------------------- |
-| `npm run dev`          | Servidor local com hot reload         |
-| `npm run build`        | Build otimizado em `dist/`            |
-| `npm run preview`      | Pré-visualiza o build                 |
-| `npm test`             | Testes com Vitest (modo watch)        |
-| `npm run lint`         | Analisa o código com ESLint           |
-| `npm run format`       | Formata o código com Prettier         |
-| `npm run format:check` | Confere a formatação sem alterar nada |
+| Script                 | Descrição                              |
+| ---------------------- | -------------------------------------- |
+| `npm run dev`          | Servidor local com hot reload          |
+| `npm run build`        | Build otimizado em `dist/`             |
+| `npm run preview`      | Pré-visualiza o build                  |
+| `npm test`             | Testes com Vitest (modo watch)         |
+| `npm run test:e2e`     | Testes de ponta a ponta com Playwright |
+| `npm run lint`         | Analisa o código com ESLint            |
+| `npm run format`       | Formata o código com Prettier          |
+| `npm run format:check` | Confere a formatação sem alterar nada  |
 
 ---
 
 ## ✅ Qualidade e entrega contínua
 
-- **67 testes** cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita, formatação, cache, store e geração do CSV.
-- **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes e build no GitHub Actions.
+- **78 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita, formatação, cache, store, filtros na URL e geração do CSV.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
 - **Fluxo de trabalho:** cada etapa do projeto foi uma branch e um Pull Request próprios, com commits no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/).
 
@@ -176,7 +179,9 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 **Interface como função do estado.** Com um store central e uma única função `render(estado)`, carregamento, erro, filtros e tema passaram a ser só valores no estado. Isso deixou fácil implementar o botão "Tentar novamente" e garantir que tudo na tela fica sempre consistente.
 
-**O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria testes de interface (por exemplo, com Playwright) além dos testes de funções.
+**Testes que não dependem da internet.** Nos testes de ponta a ponta, o Playwright intercepta as chamadas à API do IBGE e responde com dados reais salvos no repositório. Assim os testes são rápidos, dão sempre o mesmo resultado e ainda permitem simular a API fora do ar para testar a tela de erro. Para confirmar que os testes realmente protegem o código, desliguei de propósito a sincronização com a URL e vi o teste falhar.
+
+**O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
 
 ---
 

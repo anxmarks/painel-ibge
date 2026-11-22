@@ -4,7 +4,7 @@ import prettier from 'eslint-config-prettier';
 
 export default [
   // Pastas geradas que não devem ser analisadas
-  { ignores: ['dist/', 'coverage/'] },
+  { ignores: ['dist/', 'coverage/', 'playwright-report/', 'test-results/'] },
 
   js.configs.recommended,
 
@@ -24,7 +24,7 @@ export default [
 
   // Testes e arquivos de configuração rodam no Node
   {
-    files: ['tests/**/*.js', '*.config.js'],
+    files: ['tests/**/*.js', 'e2e/**/*.js', '*.config.js'],
     languageOptions: { globals: globals.node },
   },
 
