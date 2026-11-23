@@ -21,10 +21,17 @@ import { createBarChart } from './components/barChart.js';
 import { createRegionChart } from './components/regionChart.js';
 import { createStateMap } from './components/stateMap.js';
 import { createHistoryChart } from './components/historyChart.js';
+import { createHistoryTable } from './components/historyTable.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
-import { buildCsvFilename, buildStatesCsv, downloadCsv } from './utils/exportCsv.js';
+import {
+  buildCsvFilename,
+  buildHistoryCsv,
+  buildHistoryCsvFilename,
+  buildStatesCsv,
+  downloadCsv,
+} from './utils/exportCsv.js';
 import { buildSearchFromFilters, parseFiltersFromSearch } from './utils/urlState.js';
 
 const main = document.querySelector('main');
@@ -117,6 +124,7 @@ function setupDashboard() {
     legend: document.querySelector('#history-legend'),
     title: document.querySelector('#history-title'),
   });
+  const historyTable = createHistoryTable({ table: document.querySelector('#history-table') });
   const dataTable = createDataTable({
     table: document.querySelector('#states-table'),
     searchInput: document.querySelector('#state-search'),
@@ -127,6 +135,12 @@ function setupDashboard() {
   document.querySelector('#export-button').addEventListener('click', () => {
     const csv = buildStatesCsv(dataTable.getVisibleStates());
     downloadCsv(csv, buildCsvFilename(store.getState().region));
+  });
+
+  // A série inteira, sempre com as 5 regiões (o filtro só muda o destaque)
+  document.querySelector('#history-export-button').addEventListener('click', () => {
+    const { history } = store.getState();
+    downloadCsv(buildHistoryCsv(history), buildHistoryCsvFilename(history.years));
   });
 
   return function render(state) {
@@ -159,6 +173,7 @@ function setupDashboard() {
 
     // A série histórica é sempre do PIB, por região; a região filtrada fica em destaque
     historyChart.update({ history, region });
+    historyTable.update({ history, region });
   };
 }
 

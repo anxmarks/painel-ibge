@@ -48,7 +48,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Ranking dos estados** em gráfico de barras, pelo indicador escolhido
 - **Participação das regiões** (N, NE, CO, SE, S) em gráfico de rosca, com legenda que traz porcentagem e valor
 - **Mapa coroplético** dos estados, em 5 faixas de cor, com nome e valor ao passar o mouse (ou tocar). Com uma região filtrada, os outros estados ficam cinza, como contexto
-- **Série histórica** da participação de cada região no PIB, de 2002 a 2023, em gráfico de linha. A legenda mostra o primeiro e o último ano e a variação em pontos percentuais; com uma região filtrada, ela fica em destaque e as outras ficam cinza
+- **Série histórica** da participação de cada região no PIB, de 2002 a 2023, em gráfico de linha. A legenda mostra o primeiro e o último ano e a variação em pontos percentuais; com uma região filtrada, ela fica em destaque e as outras ficam cinza. Abaixo do gráfico, os valores de todos os anos ficam numa tabela (para leitores de tela ou para quem quer o número exato), que também pode ser exportada em CSV
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
 - **Filtros** por região e por indicador, que atualizam o painel inteiro
 - **Estados de interface:** skeleton de carregamento, mensagem de erro com "Tentar novamente"
@@ -127,7 +127,7 @@ painel-ibge/
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
-│   ├── components/         # kpiCards, barChart, regionChart, stateMap, historyChart, dataTable, filters, themeToggle, chartTheme
+│   ├── components/         # kpiCards, barChart, regionChart, stateMap, historyChart, historyTable, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
 │   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState e map (faixas do mapa)
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
@@ -170,8 +170,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **114 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa e a participação das regiões ano a ano.
-- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores e destaque da região), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **116 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa e a participação das regiões ano a ano.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
 - **Fluxo de trabalho:** cada etapa do projeto foi uma branch e um Pull Request próprios, com commits no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/).

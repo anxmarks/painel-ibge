@@ -39,7 +39,7 @@ test('exporta em CSV exatamente o que a tabela mostra', async ({ page }) => {
   await expect(rows(page)).toHaveCount(3);
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Exportar CSV' }).click();
+  await page.getByRole('button', { name: 'Exportar CSV', exact: true }).click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe('brasil-em-dados-2022-sul.csv');

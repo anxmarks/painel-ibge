@@ -5,6 +5,8 @@ import {
   toCsv,
   buildStatesCsv,
   buildCsvFilename,
+  buildHistoryCsv,
+  buildHistoryCsvFilename,
 } from '../src/utils/exportCsv.js';
 import { ALL_REGIONS } from '../src/config.js';
 
@@ -91,5 +93,31 @@ describe('buildCsvFilename', () => {
 
   it('usa "brasil" quando não há filtro de região', () => {
     expect(buildCsvFilename(ALL_REGIONS)).toBe('brasil-em-dados-2022-brasil.csv');
+  });
+});
+
+describe('buildHistoryCsv', () => {
+  const history = {
+    years: [2002, 2003],
+    regions: [
+      { acronym: 'N', name: 'Norte', shares: [0.04712, null] },
+      { acronym: 'SE', name: 'Sudeste', shares: [0.5744, 0.565] },
+    ],
+  };
+
+  it('uma linha por ano, uma coluna por região, em % com 2 casas', () => {
+    expect(buildHistoryCsv(history).split('\r\n')).toEqual([
+      'Ano;Norte (% do PIB);Sudeste (% do PIB)',
+      '2002;4,71;57,44',
+      '2003;;56,50',
+    ]);
+  });
+});
+
+describe('buildHistoryCsvFilename', () => {
+  it('leva o primeiro e o último ano no nome', () => {
+    expect(buildHistoryCsvFilename([2002, 2010, 2023])).toBe(
+      'brasil-em-dados-pib-regioes-2002-2023.csv',
+    );
   });
 });
