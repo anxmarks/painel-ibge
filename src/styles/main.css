@@ -258,6 +258,39 @@ main:focus {
   margin-top: var(--space-sm);
 }
 
+/* Tabela da série histórica, escondida até a pessoa abrir */
+.history-details {
+  margin-top: var(--space-lg);
+}
+
+.history-details summary {
+  width: fit-content;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-strong);
+  cursor: pointer;
+}
+
+.history-details[open] summary {
+  margin-bottom: var(--space-md);
+}
+
+/* Aqui o cabeçalho é texto simples (sem botão de ordenar), então precisa do mesmo respiro das células.
+   As duas classes juntas vencem o ".data-table thead th", que vem depois no arquivo. */
+.data-table.data-table--history thead th {
+  padding: var(--space-sm) var(--cell-padding-inline);
+}
+
+/* Coluna da região filtrada, em destaque como a linha dela no gráfico */
+.data-table--history .is-highlighted {
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-accent-soft);
+}
+
+.history-export {
+  margin-top: var(--space-md);
+}
+
 /* Legenda da rosca */
 .legend {
   display: grid;

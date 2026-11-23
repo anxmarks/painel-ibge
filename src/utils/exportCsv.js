@@ -47,6 +47,31 @@ export function buildStatesCsv(states) {
   return toCsv(states, STATE_COLUMNS);
 }
 
+// Série histórica: uma linha por ano e uma coluna por região, em % do PIB do Brasil (2 casas)
+export function buildHistoryCsv({ years, regions }) {
+  const columns = [
+    { header: 'Ano', value: (row) => row.year },
+    ...regions.map((region) => ({
+      header: `${region.name} (% do PIB)`,
+      value: (row) => formatCsvNumber(toPercent(region.shares[row.index]), 2),
+    })),
+  ];
+  return toCsv(
+    years.map((year, index) => ({ year, index })),
+    columns,
+  );
+}
+
+// 0.5744 -> 57.44 (null continua null, para a célula ficar vazia)
+function toPercent(share) {
+  return share === null ? null : share * 100;
+}
+
+// Ex.: brasil-em-dados-pib-regioes-2002-2023.csv
+export function buildHistoryCsvFilename(years) {
+  return `${CSV_FILENAME_PREFIX}-pib-regioes-${years[0]}-${years.at(-1)}.csv`;
+}
+
 // Nome do arquivo com o ano e a região, ex.: brasil-em-dados-2022-centro-oeste.csv
 export function buildCsvFilename(regionAcronym) {
   const region = REGIONS.find((item) => item.acronym === regionAcronym);

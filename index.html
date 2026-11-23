@@ -152,6 +152,33 @@
           class="legend legend--history"
           aria-labelledby="history-legend-caption"
         ></ul>
+        <!-- <details> já vem do navegador: abre e fecha com mouse, teclado e leitor de tela -->
+        <details class="history-details">
+          <summary>Ver os dados em tabela</summary>
+          <div
+            class="table-wrapper"
+            tabindex="0"
+            role="region"
+            aria-label="Participação das regiões no PIB, por ano"
+          >
+            <table id="history-table" class="data-table data-table--history">
+              <caption class="visually-hidden">
+                Participação de cada região no PIB do Brasil, em %, por ano
+              </caption>
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <button
+            type="button"
+            id="history-export-button"
+            class="button button--secondary history-export"
+            data-requires-data
+            disabled
+          >
+            Exportar CSV da série
+          </button>
+        </details>
       </section>
 
       <section class="section panel" aria-labelledby="table-title">
