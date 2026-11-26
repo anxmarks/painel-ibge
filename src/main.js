@@ -33,19 +33,27 @@ import {
   downloadCsv,
 } from './utils/exportCsv.js';
 import { buildSearchFromFilters, parseFiltersFromSearch } from './utils/urlState.js';
+import { requireElement } from './utils/dom.js';
 
-const main = document.querySelector('main');
-const kpiContainer = document.querySelector('#kpi-cards');
-const kpiTitle = document.querySelector('#kpi-title');
-const loadingMessage = document.querySelector('#loading-message');
-const errorPanel = document.querySelector('#error-panel');
-const errorMessage = document.querySelector('#error-message');
-const retryButton = document.querySelector('#retry-button');
+/** @typedef {import('./types.js').AppState} AppState */
+/** @typedef {import('./types.js').Filters} Filters */
+/** @typedef {import('./types.js').RegionFilter} RegionFilter */
+
+const main = requireElement('main', HTMLElement);
+const kpiContainer = requireElement('#kpi-cards', HTMLElement);
+const kpiTitle = requireElement('#kpi-title', HTMLElement);
+const loadingMessage = requireElement('#loading-message', HTMLElement);
+const errorPanel = requireElement('#error-panel', HTMLElement);
+const errorMessage = requireElement('#error-message', HTMLElement);
+const retryButton = requireElement('#retry-button', HTMLButtonElement);
+// Botões, seletores e a busca: todos têm "disabled" e ficam desligados até os dados chegarem
+/** @type {NodeListOf<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>} */
 const dataControls = document.querySelectorAll('[data-requires-data]');
 
 // Estado inicial: carregando, sem dados ainda e com os filtros que vierem na URL
 // (sem parâmetros, Brasil inteiro e indicador padrão). status pode ser 'loading', 'ready' ou 'error'.
-const store = createStore({
+/** @type {AppState} */
+const initialState = {
   status: 'loading',
   errorMessage: '',
   states: [],
@@ -53,7 +61,8 @@ const store = createStore({
   history: null, // participação de cada região no PIB, ano a ano
   ...parseFiltersFromSearch(window.location.search),
   theme: getActiveTheme(),
-});
+};
+const store = createStore(initialState);
 
 // Busca tudo em paralelo: os dados viram um único array de estados; a malha vai direto para o mapa
 // e a série do PIB vira a participação de cada região por ano
@@ -70,11 +79,13 @@ async function loadDashboardData() {
   return { states, mesh, history: buildRegionShareSeries(states, gdpSeries) };
 }
 
+/** @param {RegionFilter} acronym */
 function regionName(acronym) {
   return REGIONS.find((region) => region.acronym === acronym)?.name ?? 'Brasil';
 }
 
 // Reflete o status na página: o CSS usa data-status; leitores de tela, aria-busy e as mensagens
+/** @param {AppState} state */
 function renderStatus({ status, errorMessage: message }) {
   main.dataset.status = status;
   main.setAttribute('aria-busy', String(status === 'loading'));
@@ -91,58 +102,62 @@ function renderStatus({ status, errorMessage: message }) {
 function setupDashboard() {
   // Trocar o tema muda o estado; o render redesenha os gráficos com as cores novas
   createThemeToggle({
-    button: document.querySelector('#theme-toggle'),
+    button: requireElement('#theme-toggle', HTMLButtonElement),
     onChange: (theme) => store.setState({ theme }),
   });
 
   applyChartDefaults(); // precisa vir antes de criar os gráficos
 
   const filters = createFilters({
-    regionSelect: document.querySelector('#region-filter'),
-    indicatorSelect: document.querySelector('#indicator-filter'),
+    regionSelect: requireElement('#region-filter', HTMLSelectElement),
+    indicatorSelect: requireElement('#indicator-filter', HTMLSelectElement),
     onChange: (changes) => store.setState(changes),
   });
   const rankingChart = createBarChart({
-    canvas: document.querySelector('#ranking-chart'),
-    title: document.querySelector('#ranking-title'),
+    canvas: requireElement('#ranking-chart', HTMLCanvasElement),
+    title: requireElement('#ranking-title', HTMLElement),
   });
   const regionChart = createRegionChart({
-    canvas: document.querySelector('#region-chart'),
-    legend: document.querySelector('#region-legend'),
-    title: document.querySelector('#region-title'),
+    canvas: requireElement('#region-chart', HTMLCanvasElement),
+    legend: requireElement('#region-legend', HTMLElement),
+    title: requireElement('#region-title', HTMLElement),
   });
   const stateMap = createStateMap({
-    svg: document.querySelector('#state-map'),
-    legend: document.querySelector('#map-legend'),
-    legendTitle: document.querySelector('#map-legend-title'),
-    title: document.querySelector('#map-title'),
-    note: document.querySelector('#map-note'),
-    tooltip: document.querySelector('#map-tooltip'),
+    svg: requireElement('#state-map', SVGSVGElement),
+    legend: requireElement('#map-legend', HTMLElement),
+    legendTitle: requireElement('#map-legend-title', HTMLElement),
+    title: requireElement('#map-title', HTMLElement),
+    note: requireElement('#map-note', HTMLElement),
+    tooltip: requireElement('#map-tooltip', HTMLElement),
   });
   const historyChart = createHistoryChart({
-    canvas: document.querySelector('#history-chart'),
-    legend: document.querySelector('#history-legend'),
-    title: document.querySelector('#history-title'),
+    canvas: requireElement('#history-chart', HTMLCanvasElement),
+    legend: requireElement('#history-legend', HTMLElement),
+    title: requireElement('#history-title', HTMLElement),
   });
-  const historyTable = createHistoryTable({ table: document.querySelector('#history-table') });
+  const historyTable = createHistoryTable({
+    table: requireElement('#history-table', HTMLTableElement),
+  });
   const dataTable = createDataTable({
-    table: document.querySelector('#states-table'),
-    searchInput: document.querySelector('#state-search'),
-    resultCount: document.querySelector('#table-count'),
+    table: requireElement('#states-table', HTMLTableElement),
+    searchInput: requireElement('#state-search', HTMLInputElement),
+    resultCount: requireElement('#table-count', HTMLElement),
   });
 
   // Exporta exatamente o que a tabela mostra: região filtrada, busca e ordenação
-  document.querySelector('#export-button').addEventListener('click', () => {
+  requireElement('#export-button', HTMLButtonElement).addEventListener('click', () => {
     const csv = buildStatesCsv(dataTable.getVisibleStates());
     downloadCsv(csv, buildCsvFilename(store.getState().region));
   });
 
   // A série inteira, sempre com as 5 regiões (o filtro só muda o destaque)
-  document.querySelector('#history-export-button').addEventListener('click', () => {
+  requireElement('#history-export-button', HTMLButtonElement).addEventListener('click', () => {
     const { history } = store.getState();
+    if (!history) return; // o botão fica desligado até os dados chegarem
     downloadCsv(buildHistoryCsv(history), buildHistoryCsvFilename(history.years));
   });
 
+  /** @param {AppState} state */
   return function render(state) {
     renderStatus(state);
 
@@ -150,7 +165,8 @@ function setupDashboard() {
       renderKpiSkeleton(kpiContainer);
       dataTable.showLoading();
     }
-    if (state.status !== 'ready') return;
+    // Com status "ready", a malha e a série sempre chegaram juntas com os estados (loadData)
+    if (state.status !== 'ready' || !state.mesh || !state.history) return;
 
     const { states, mesh, history, region, indicator } = state;
     const visibleStates = filterByRegion(states, region);
@@ -184,19 +200,23 @@ async function loadData() {
     store.setState({ status: 'ready', ...(await loadDashboardData()) });
   } catch (error) {
     console.error(error);
+    // Em JavaScript dá para lançar qualquer coisa (até um texto), então o tipo de "error" é unknown
+    const reason = error instanceof Error ? error.message : 'Erro inesperado.';
     store.setState({
       status: 'error',
-      errorMessage: `${error.message} Verifique sua conexão e tente de novo.`,
+      errorMessage: `${reason} Verifique sua conexão e tente de novo.`,
     });
   }
 }
 
+/** @param {string} search */
 function urlFor(search) {
   return `${window.location.pathname}${search}${window.location.hash}`;
 }
 
 // Mantém a URL igual aos filtros. Cada mudança vira uma entrada no histórico,
 // então o botão "voltar" do navegador desfaz o último filtro.
+/** @param {Filters} filters */
 function syncUrl({ region, indicator }) {
   const search = buildSearchFromFilters({ region, indicator });
   if (search === window.location.search) return; // nada mudou (ou a mudança veio do próprio "voltar")
@@ -205,6 +225,7 @@ function syncUrl({ region, indicator }) {
 
 // Link com valor inválido (ex.: ?regiao=XX) ou parâmetros estranhos: corrige a URL
 // sem criar entrada no histórico, senão o "voltar" levaria de novo ao link quebrado
+/** @param {Filters} filters */
 function normalizeUrl({ region, indicator }) {
   window.history.replaceState(null, '', urlFor(buildSearchFromFilters({ region, indicator })));
 }

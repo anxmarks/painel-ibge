@@ -1,13 +1,33 @@
 import { ALL_REGIONS, GDP_UNIT_MULTIPLIER, LOCALE, REGIONS } from '../config.js';
 
+/** @typedef {import('../types.js').StateData} StateData */
+/** @typedef {import('../types.js').Summary} Summary */
+/** @typedef {import('../types.js').RegionSummary} RegionSummary */
+/** @typedef {import('../types.js').RegionShareSeries} RegionShareSeries */
+/** @typedef {import('../types.js').RegionAcronym} RegionAcronym */
+/** @typedef {import('../types.js').RegionFilter} RegionFilter */
+/** @typedef {import('../types.js').IndicatorKey} IndicatorKey */
+/** @typedef {import('../types.js').TableColumnKey} TableColumnKey */
+/** @typedef {import('../types.js').SortDirection} SortDirection */
+/** @typedef {import('../types.js').SidraResponse} SidraResponse */
+/** @typedef {import('../types.js').IbgeState} IbgeState */
+
 // Converte um valor do SIDRA (sempre texto) em número.
 // O SIDRA usa símbolos como "...", "-" ou "X" para dado ausente: nesses casos devolve null.
+/**
+ * @param {string | undefined} value
+ * @returns {number | null}
+ */
 export function parseSidraValue(value) {
   const number = Number(value);
   return value !== '' && Number.isFinite(number) ? number : null;
 }
 
 // Desaninha a resposta de um agregado do SIDRA em um Map { id do estado -> valor }
+/**
+ * @param {SidraResponse | undefined} response
+ * @returns {Map<number, number | null>}
+ */
 export function parseAggregateSeries(response) {
   const series = response?.[0]?.resultados?.[0]?.series ?? [];
 
@@ -21,6 +41,10 @@ export function parseAggregateSeries(response) {
 }
 
 // Desaninha uma série com vários anos em um Map { id do estado -> Map { ano -> valor } }
+/**
+ * @param {SidraResponse | undefined} response
+ * @returns {Map<number, Map<number, number | null>>}
+ */
 export function parseAggregateTimeSeries(response) {
   const series = response?.[0]?.resultados?.[0]?.series ?? [];
 
@@ -33,22 +57,42 @@ export function parseAggregateTimeSeries(response) {
 }
 
 // Divisão que devolve null quando falta algum dado (ou quando o divisor é zero)
+/**
+ * @param {number | null} numerator
+ * @param {number | null} denominator
+ * @returns {number | null}
+ */
 function divide(numerator, denominator) {
   if (numerator === null || !denominator) return null;
   return numerator / denominator;
 }
 
 // PIB per capita em reais; null quando falta algum dos dados
+/**
+ * @param {number | null} gdp
+ * @param {number | null} population
+ */
 export function calculatePerCapita(gdp, population) {
   return divide(gdp, population);
 }
 
 // Densidade demográfica em habitantes por km²; null quando falta algum dos dados
+/**
+ * @param {number | null} population
+ * @param {number | null} area
+ */
 export function calculateDensity(population, area) {
   return divide(population, area);
 }
 
 // Junta estados, população, PIB e área em um único array de objetos planos
+/**
+ * @param {IbgeState[]} states
+ * @param {SidraResponse} populationResponse
+ * @param {SidraResponse} gdpResponse
+ * @param {SidraResponse} areaResponse
+ * @returns {StateData[]}
+ */
 export function mergeStateData(states, populationResponse, gdpResponse, areaResponse) {
   const populationById = parseAggregateSeries(populationResponse);
   const gdpById = parseAggregateSeries(gdpResponse);
@@ -76,6 +120,12 @@ export function mergeStateData(states, populationResponse, gdpResponse, areaResp
 }
 
 // Soma uma propriedade numérica, ignorando valores ausentes (null)
+/**
+ * @template {string} K
+ * @param {Partial<Record<K, number | null>>[]} items
+ * @param {K} key
+ * @returns {number}
+ */
 export function sumBy(items, key) {
   return items.reduce((total, item) => total + (item[key] ?? 0), 0);
 }
@@ -84,6 +134,10 @@ export function sumBy(items, key) {
 // O per capita é PIB total ÷ população total, e não a média dos per capitas dos estados:
 // a média daria o mesmo peso a Roraima e a São Paulo. A densidade segue a mesma regra.
 // Cada razão usa só os estados que têm os dois dados, para numerador e divisor falarem dos mesmos estados.
+/**
+ * @param {StateData[]} states
+ * @returns {Summary}
+ */
 export function summarizeStates(states) {
   const withGdp = states.filter((state) => state.population !== null && state.gdp !== null);
   const withArea = states.filter((state) => state.population !== null && state.area !== null);
@@ -100,13 +154,25 @@ export function summarizeStates(states) {
 
 // Ordena os estados do maior para o menor valor do indicador, deixando de fora os sem dado.
 // Devolve um array novo, sem alterar o original.
+/**
+ * @param {StateData[]} states
+ * @param {IndicatorKey} indicator
+ * @returns {StateData[]}
+ */
 export function rankStates(states, indicator) {
-  return states
-    .filter((state) => state[indicator] !== null)
-    .sort((a, b) => b[indicator] - a[indicator]);
+  return (
+    states
+      .filter((state) => state[indicator] !== null)
+      // O filter já tirou os null; o "?? 0" só deixa isso claro para o TypeScript
+      .sort((a, b) => (b[indicator] ?? 0) - (a[indicator] ?? 0))
+  );
 }
 
 // Totais por região, sempre na ordem de REGIONS (regiões sem estados ficam de fora)
+/**
+ * @param {StateData[]} states
+ * @returns {RegionSummary[]}
+ */
 export function groupByRegion(states) {
   return REGIONS.map((region) => {
     const regionStates = states.filter((state) => state.regionAcronym === region.acronym);
@@ -115,17 +181,26 @@ export function groupByRegion(states) {
 }
 
 // Mantém só os estados da região escolhida; ALL_REGIONS devolve todos
+/**
+ * @param {StateData[]} states
+ * @param {RegionFilter} regionAcronym
+ */
 export function filterByRegion(states, regionAcronym) {
   if (regionAcronym === ALL_REGIONS) return states;
   return states.filter((state) => state.regionAcronym === regionAcronym);
 }
 
 // Tira acentos e deixa minúsculo, para "sao" encontrar "São Paulo"
+/** @param {string} text */
 export function normalizeText(text) {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
 // Filtra os estados pelo nome ou pela sigla; busca vazia devolve todos
+/**
+ * @param {StateData[]} states
+ * @param {string} query
+ */
 export function searchStates(states, query) {
   const term = normalizeText(query);
   if (term === '') return states;
@@ -136,12 +211,21 @@ export function searchStates(states, query) {
 }
 
 // Compara dois valores: textos em ordem alfabética do português, números do menor para o maior
+/**
+ * @param {string | number} a
+ * @param {string | number} b
+ */
 function compareValues(a, b) {
-  if (typeof a === 'string') return a.localeCompare(b, LOCALE);
-  return a - b;
+  if (typeof a === 'string') return a.localeCompare(String(b), LOCALE);
+  return a - Number(b);
 }
 
 // Ordena por qualquer coluna, em ordem 'asc' ou 'desc'. Valores null vão sempre para o fim.
+/**
+ * @param {StateData[]} states
+ * @param {TableColumnKey} key
+ * @param {SortDirection} [direction]
+ */
 export function sortStates(states, key, direction = 'asc') {
   const sign = direction === 'asc' ? 1 : -1;
 
@@ -156,6 +240,11 @@ export function sortStates(states, key, direction = 'asc') {
 // Participação, e não o PIB em reais: o PIB está a preços correntes, e em reais a inflação
 // faria todas as linhas subirem juntas. A participação compara as regiões dentro do mesmo ano.
 // O total de cada ano soma só os estados com dado naquele ano.
+/**
+ * @param {StateData[]} states
+ * @param {SidraResponse} gdpSeriesResponse
+ * @returns {RegionShareSeries}
+ */
 export function buildRegionShareSeries(states, gdpSeriesResponse) {
   const gdpById = parseAggregateTimeSeries(gdpSeriesResponse);
   const years = [...new Set([...gdpById.values()].flatMap((byYear) => [...byYear.keys()]))].sort(
@@ -163,18 +252,22 @@ export function buildRegionShareSeries(states, gdpSeriesResponse) {
   );
   const regionOf = new Map(states.map((state) => [state.id, state.regionAcronym]));
 
+  /** @type {RegionShareSeries['regions']} */
   const regions = REGIONS.map((region) => ({ ...region, shares: [] }));
   for (const year of years) {
+    /** @type {Map<RegionAcronym, number>} */
     const totals = new Map(REGIONS.map((region) => [region.acronym, 0]));
     let brazilTotal = 0;
     for (const [id, byYear] of gdpById) {
       const value = byYear.get(year);
-      if (value === null || value === undefined || !totals.has(regionOf.get(id))) continue;
-      totals.set(regionOf.get(id), totals.get(regionOf.get(id)) + value);
+      const acronym = regionOf.get(id);
+      // Sem dado no ano, ou estado que não está na lista de localidades: fica de fora do total
+      if (value === null || value === undefined || acronym === undefined) continue;
+      totals.set(acronym, (totals.get(acronym) ?? 0) + value);
       brazilTotal += value;
     }
     for (const region of regions) {
-      region.shares.push(divide(totals.get(region.acronym), brazilTotal));
+      region.shares.push(divide(totals.get(region.acronym) ?? 0, brazilTotal));
     }
   }
 

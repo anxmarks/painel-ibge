@@ -9,7 +9,14 @@ import {
   REGIONS,
 } from '../config.js';
 import { classify, computeQuantileBreaks, mapIndicatorFor, rewindForD3 } from '../utils/map.js';
+import { rankStates } from '../utils/transform.js';
 import { formatIndicator } from '../utils/format.js';
+
+/** @typedef {import('../types.js').StateData} StateData */
+/** @typedef {import('../types.js').StateMesh} StateMesh */
+/** @typedef {import('../types.js').IndicatorKey} IndicatorKey */
+/** @typedef {import('../types.js').RegionFilter} RegionFilter */
+/** @typedef {{ states: StateData[], mesh: StateMesh, indicator: IndicatorKey, region: RegionFilter }} MapParams */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const TOOLTIP_OFFSET = 12; // distância entre o ponteiro e a caixinha, em px
@@ -18,6 +25,7 @@ const PATH_DIGITS = 1; // casas decimais nos caminhos do SVG: num desenho de 600
 
 // Projeção cônica de áreas iguais: cada estado aparece com a área proporcional à real,
 // o que importa num mapa em que a cor é comparada por área. Centrada no Brasil.
+/** @param {StateMesh} mesh */
 function createProjection(mesh) {
   return geoConicEqualArea()
     .parallels([-2, -22])
@@ -32,15 +40,29 @@ function createProjection(mesh) {
 }
 
 // Mapa coroplético dos estados: a cor de cada estado mostra em que faixa o indicador está
+/**
+ * @param {{
+ *   svg: SVGSVGElement,
+ *   legend: HTMLElement,
+ *   legendTitle: HTMLElement,
+ *   title: HTMLElement,
+ *   note: HTMLElement,
+ *   tooltip: HTMLElement,
+ * }} elements
+ */
 export function createStateMap({ svg, legend, legendTitle, title, note, tooltip }) {
-  const container = svg.parentElement;
+  const container = svg.parentElement ?? svg;
+  /** @type {Map<number, SVGPathElement>} */
   const paths = new Map(); // id do estado -> <path>
+  /** @type {Map<number, { name: string, value: string }>} */
   const tooltipTexts = new Map(); // id do estado -> { name, value }
+  /** @type {MapParams | null} */
   let pending = null; // última atualização pedida enquanto o contorno ainda não foi desenhado
 
   svg.setAttribute('viewBox', `0 0 ${MAP_SIZE} ${MAP_SIZE}`);
 
   // O contorno dos estados não muda: é desenhado uma vez só, na primeira atualização
+  /** @param {StateMesh} mesh */
   function drawMesh(mesh) {
     const features = mesh.features.map(rewindForD3);
     const toPath = geoPath(createProjection({ ...mesh, features })).digits(PATH_DIGITS);
@@ -48,18 +70,19 @@ export function createStateMap({ svg, legend, legendTitle, title, note, tooltip 
     for (const feature of features) {
       const path = document.createElementNS(SVG_NS, 'path');
       const id = Number(feature.properties.codarea);
-      path.setAttribute('d', toPath(feature));
+      path.setAttribute('d', toPath(feature) ?? '');
       path.setAttribute('class', 'map-state');
-      path.dataset.stateId = id;
+      path.dataset.stateId = String(id);
       svg.append(path);
       paths.set(id, path);
     }
   }
 
+  /** @param {PointerEvent} event */
   function showTooltip(event) {
-    const path = event.target.closest('.map-state');
-    const text = path && tooltipTexts.get(Number(path.dataset.stateId));
-    if (!text) return hideTooltip();
+    const path = event.target instanceof Element && event.target.closest('.map-state');
+    const text = path instanceof SVGPathElement && tooltipTexts.get(Number(path.dataset.stateId));
+    if (!path || !text) return hideTooltip();
 
     tooltip.innerHTML = `<strong>${text.name}</strong><span>${text.value}</span>`;
     tooltip.hidden = false;
@@ -89,12 +112,14 @@ export function createStateMap({ svg, legend, legendTitle, title, note, tooltip 
     if (event.pointerType !== 'touch') hideTooltip();
   });
   document.addEventListener('pointerdown', (event) => {
-    if (!svg.contains(event.target)) hideTooltip();
+    const isInsideMap = event.target instanceof Node && svg.contains(event.target);
+    if (!isInsideMap) hideTooltip();
   });
 
   // Desenhar os 27 contornos é a parte mais pesada do painel (projetar ~5 mil pontos).
   // Na primeira vez, isso vai para uma tarefa separada: os cards, os gráficos e a tabela aparecem
   // antes, e a página não fica travada numa tarefa longa só. Depois, cada update só troca as cores.
+  /** @param {MapParams} params */
   function update(params) {
     if (paths.size > 0) return paint(params);
 
@@ -103,11 +128,13 @@ export function createStateMap({ svg, legend, legendTitle, title, note, tooltip 
     if (!isFirstRequest) return;
 
     setTimeout(() => {
+      if (!pending) return;
       drawMesh(pending.mesh);
       paint(pending);
     });
   }
 
+  /** @param {MapParams} params */
   function paint({ states, indicator, region }) {
     const mapIndicator = mapIndicatorFor(indicator);
     const { label } = INDICATORS[mapIndicator];
@@ -121,6 +148,7 @@ export function createStateMap({ svg, legend, legendTitle, title, note, tooltip 
       cssVar(`--color-map-${index + 1}`),
     );
     const mutedColor = cssVar('--color-map-muted');
+    /** @param {StateData} state */
     const isInRegion = (state) => region === ALL_REGIONS || state.regionAcronym === region;
 
     svg.style.setProperty('--map-stroke', cssVar('--color-surface'));
@@ -153,8 +181,13 @@ export function createStateMap({ svg, legend, legendTitle, title, note, tooltip 
 }
 
 // Rótulo de cada faixa: "até 5", "5 a 12", ..., "acima de 70"
+/**
+ * @param {number[]} breaks
+ * @param {IndicatorKey} indicator
+ */
 function classLabels(breaks, indicator) {
-  const format = (value) => formatIndicator(indicator, value, { short: true });
+  /** @param {number | undefined} value */
+  const format = (value) => formatIndicator(indicator, value ?? null, { short: true });
   return Array.from({ length: breaks.length + 1 }, (_, index) => {
     if (index === 0) return `até ${format(breaks[0])}`;
     if (index === breaks.length) return `acima de ${format(breaks.at(-1))}`;
@@ -162,6 +195,15 @@ function classLabels(breaks, indicator) {
   });
 }
 
+/**
+ * @param {{
+ *   breaks: number[],
+ *   colors: string[],
+ *   mutedColor: string,
+ *   mapIndicator: IndicatorKey,
+ *   region: RegionFilter,
+ * }} params
+ */
 function legendTemplate({ breaks, colors, mutedColor, mapIndicator, region }) {
   const items = classLabels(breaks, mapIndicator).map(
     (text, index) => `
@@ -182,18 +224,20 @@ function legendTemplate({ breaks, colors, mutedColor, mapIndicator, region }) {
 
 // Texto para leitores de tela: o que o mapa mostra e quais estados estão nas pontas.
 // Os valores de todos os estados estão na tabela logo abaixo.
+/**
+ * @param {StateData[]} states
+ * @param {IndicatorKey} indicator
+ * @param {RegionFilter} region
+ */
 function describeMap(states, indicator, region) {
-  const ranked = states
-    .filter((state) => state[indicator] !== null)
-    .sort((a, b) => b[indicator] - a[indicator]);
+  const ranked = rankStates(states, indicator);
+  /** @param {StateData[]} items */
   const list = (items) =>
     items
       .map((state) => `${state.name} (${formatIndicator(indicator, state[indicator])})`)
       .join(', ');
-  const place =
-    region === ALL_REGIONS
-      ? 'dos estados'
-      : `da região ${REGIONS.find((r) => r.acronym === region).name}`;
+  const regionName = REGIONS.find((item) => item.acronym === region)?.name;
+  const place = regionName ? `da região ${regionName}` : 'dos estados';
 
   const intro = `Mapa ${place}: ${INDICATORS[indicator].label}.`;
 
