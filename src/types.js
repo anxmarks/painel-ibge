@@ -65,6 +65,13 @@
  */
 
 /**
+ * Participação de cada estado no PIB, ano a ano (saída do buildStateShareSeries)
+ * @typedef {object} StateShareSeries
+ * @property {number[]} years
+ * @property {(Pick<StateData, 'id' | 'acronym' | 'name' | 'regionAcronym'> & { shares: (number | null)[] })[]} states
+ */
+
+/**
  * Estado (no sentido de "state") do painel inteiro, guardado no store
  * @typedef {object} AppState
  * @property {'loading' | 'ready' | 'error'} status
@@ -72,6 +79,7 @@
  * @property {StateData[]} states
  * @property {StateMesh | null} mesh
  * @property {RegionShareSeries | null} history
+ * @property {StateShareSeries | null} stateHistory
  * @property {RegionFilter} region
  * @property {IndicatorKey} indicator
  * @property {string[]} compare Siglas dos estados comparados (de 0 a 3)

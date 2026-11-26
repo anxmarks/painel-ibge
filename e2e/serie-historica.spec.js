@@ -96,3 +96,37 @@ test('a tabela da série mostra todos os anos e exporta em CSV', async ({ page }
   );
   expect(lines[1]).toMatch(/^2002;4,\d\d;13,\d\d;8,\d\d;57,\d\d;16,\d\d$/);
 });
+
+test('série por estado: do que mais ganhou ao que mais perdeu', async ({ page }) => {
+  await page.goto('./');
+  const cards = page.locator('#state-history .spark-card');
+
+  await expect(cards).toHaveCount(27);
+  await expect(
+    page.getByRole('heading', { name: 'Participação de cada estado no PIB, 2002–2023' }),
+  ).toBeVisible();
+  await expect(cards.first()).toContainText('Mato Grosso');
+  await expect(cards.first()).toContainText('+1,2 p.p.');
+  await expect(cards.first()).toContainText('1,3% → 2,5%');
+  await expect(cards.last()).toContainText('São Paulo');
+  await expect(cards.last()).toContainText('-3,4 p.p.');
+  // Cada cartão tem o seu pequeno gráfico desenhado
+  await expect(cards.first().locator('svg path')).toHaveAttribute('d', /^M0 /);
+});
+
+test('série por estado: o filtro de região mostra só os estados dela', async ({ page }) => {
+  await page.goto('./');
+  await page.getByLabel('Região', { exact: true }).selectOption('CO');
+
+  await expect(
+    page.getByRole('heading', {
+      name: 'Participação de cada estado no PIB, 2002–2023: Centro-Oeste',
+    }),
+  ).toBeVisible();
+  await expect(page.locator('#state-history .spark-name')).toHaveText([
+    'Mato Grosso',
+    'Mato Grosso do Sul',
+    'Goiás',
+    'Distrito Federal',
+  ]);
+});

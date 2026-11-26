@@ -10,6 +10,7 @@ import {
 } from './services/ibgeApi.js';
 import {
   buildRegionShareSeries,
+  buildStateShareSeries,
   filterByRegion,
   mergeStateData,
   summarizeStates,
@@ -23,6 +24,7 @@ import { createStateMap } from './components/stateMap.js';
 import { createHistoryChart } from './components/historyChart.js';
 import { createHistoryTable } from './components/historyTable.js';
 import { createStateCompare } from './components/stateCompare.js';
+import { createStateHistory } from './components/stateHistory.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
@@ -60,6 +62,7 @@ const initialState = {
   states: [],
   mesh: null, // contornos dos estados para o mapa (GeoJSON)
   history: null, // participação de cada região no PIB, ano a ano
+  stateHistory: null, // a mesma série, por estado
   ...parseFiltersFromSearch(window.location.search),
   theme: getActiveTheme(),
 };
@@ -77,7 +80,12 @@ async function loadDashboardData() {
     fetchGdpSeries(),
   ]);
   const states = mergeStateData(rawStates, population, gdp, area);
-  return { states, mesh, history: buildRegionShareSeries(states, gdpSeries) };
+  return {
+    states,
+    mesh,
+    history: buildRegionShareSeries(states, gdpSeries),
+    stateHistory: buildStateShareSeries(states, gdpSeries),
+  };
 }
 
 /** @param {RegionFilter} acronym */
@@ -149,6 +157,10 @@ function setupDashboard() {
   const historyTable = createHistoryTable({
     table: requireElement('#history-table', HTMLTableElement),
   });
+  const stateHistory = createStateHistory({
+    list: requireElement('#state-history', HTMLElement),
+    title: requireElement('#state-history-title', HTMLElement),
+  });
   const dataTable = createDataTable({
     table: requireElement('#states-table', HTMLTableElement),
     searchInput: requireElement('#state-search', HTMLInputElement),
@@ -177,7 +189,7 @@ function setupDashboard() {
       dataTable.showLoading();
     }
     // Com status "ready", a malha e a série sempre chegaram juntas com os estados (loadData)
-    if (state.status !== 'ready' || !state.mesh || !state.history) return;
+    if (state.status !== 'ready' || !state.mesh || !state.history || !state.stateHistory) return;
 
     const { states, mesh, history, region, indicator, compare } = state;
     const visibleStates = filterByRegion(states, region);
@@ -204,6 +216,9 @@ function setupDashboard() {
     // A série histórica é sempre do PIB, por região; a região filtrada fica em destaque
     historyChart.update({ history, region });
     historyTable.update({ history, region });
+
+    // Série por estado: com uma região filtrada, só os estados dela
+    stateHistory.update({ stateHistory: state.stateHistory, region });
   };
 }
 

@@ -144,6 +144,10 @@ export const MAP_RATE_INDICATOR = { population: 'density', gdp: 'gdpPerCapita' }
 // Número de faixas de cor (cada uma tem uma cor --color-map-1 ... --color-map-5 no variables.css)
 export const MAP_CLASS_COUNT = 5;
 
+// Pequenos gráficos da série por estado: tamanho do desenho (viewBox) e margem para a linha
+// não encostar nas bordas. Na tela, o SVG estica para a largura do cartão.
+export const SPARKLINE = { width: 120, height: 36, padding: 3 };
+
 // Tamanho do desenho (viewBox do SVG); na tela, o SVG se ajusta à largura do painel
 export const MAP_SIZE = 600;
 export const MAP_PADDING = 8;

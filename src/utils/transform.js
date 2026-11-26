@@ -4,6 +4,7 @@ import { ALL_REGIONS, GDP_UNIT_MULTIPLIER, LOCALE, REGIONS } from '../config.js'
 /** @typedef {import('../types.js').Summary} Summary */
 /** @typedef {import('../types.js').RegionSummary} RegionSummary */
 /** @typedef {import('../types.js').RegionShareSeries} RegionShareSeries */
+/** @typedef {import('../types.js').StateShareSeries} StateShareSeries */
 /** @typedef {import('../types.js').RegionAcronym} RegionAcronym */
 /** @typedef {import('../types.js').RegionFilter} RegionFilter */
 /** @typedef {import('../types.js').IndicatorKey} IndicatorKey */
@@ -247,9 +248,7 @@ export function sortStates(states, key, direction = 'asc') {
  */
 export function buildRegionShareSeries(states, gdpSeriesResponse) {
   const gdpById = parseAggregateTimeSeries(gdpSeriesResponse);
-  const years = [...new Set([...gdpById.values()].flatMap((byYear) => [...byYear.keys()]))].sort(
-    (a, b) => a - b,
-  );
+  const years = collectYears(gdpById);
   const regionOf = new Map(states.map((state) => [state.id, state.regionAcronym]));
 
   /** @type {RegionShareSeries['regions']} */
@@ -272,4 +271,40 @@ export function buildRegionShareSeries(states, gdpSeriesResponse) {
   }
 
   return { years, regions };
+}
+
+// Todos os anos que aparecem na série, em ordem crescente
+/** @param {Map<number, Map<number, number | null>>} gdpById */
+function collectYears(gdpById) {
+  return [...new Set([...gdpById.values()].flatMap((byYear) => [...byYear.keys()]))].sort(
+    (a, b) => a - b,
+  );
+}
+
+// Participação de cada estado no PIB do Brasil, ano a ano (de 0 a 1).
+// Mesma regra da série por região: o total do ano soma só os estados da lista que têm dado.
+/**
+ * @param {StateData[]} states
+ * @param {SidraResponse} gdpSeriesResponse
+ * @returns {StateShareSeries}
+ */
+export function buildStateShareSeries(states, gdpSeriesResponse) {
+  const gdpById = parseAggregateTimeSeries(gdpSeriesResponse);
+  const years = collectYears(gdpById);
+  /** @param {number} id @param {number} year */
+  const valueOf = (id, year) => gdpById.get(id)?.get(year) ?? null;
+  const totals = years.map((year) =>
+    states.reduce((total, state) => total + (valueOf(state.id, year) ?? 0), 0),
+  );
+
+  return {
+    years,
+    states: states.map(({ id, acronym, name, regionAcronym }) => ({
+      id,
+      acronym,
+      name,
+      regionAcronym,
+      shares: years.map((year, index) => divide(valueOf(id, year), totals[index])),
+    })),
+  };
 }
