@@ -7,7 +7,11 @@ import {
   formatInteger,
 } from '../utils/format.js';
 
+/** @typedef {import('../types.js').Summary} Summary */
+/** @typedef {{ label: string, value: (summary: Summary) => string, detail: (summary: Summary) => string }} KpiCard */
+
 // Os quatro cards: o rótulo é fixo; valor e detalhe são calculados a partir do resumo
+/** @type {KpiCard[]} */
 const KPI_CARDS = [
   {
     label: 'População',
@@ -32,6 +36,7 @@ const KPI_CARDS = [
 ];
 
 // Monta o HTML de um card. Os textos vêm do próprio código e dos formatadores, nunca do usuário.
+/** @param {{ label: string, value: string, detail: string }} card */
 function cardTemplate({ label, value, detail }) {
   return `
     <article class="kpi-card">
@@ -43,6 +48,10 @@ function cardTemplate({ label, value, detail }) {
 }
 
 // Desenha os cards de resumo a partir dos totais calculados por summarizeStates
+/**
+ * @param {HTMLElement} container
+ * @param {Summary} summary
+ */
 export function renderKpiCards(container, summary) {
   container.innerHTML = KPI_CARDS.map((card) =>
     cardTemplate({
@@ -55,6 +64,7 @@ export function renderKpiCards(container, summary) {
 
 // Enquanto os dados carregam: os mesmos cards, com blocos animados no lugar dos números.
 // Assim a página não "pula" quando os valores chegam.
+/** @param {HTMLElement} container */
 export function renderKpiSkeleton(container) {
   container.innerHTML = KPI_CARDS.map((card) =>
     cardTemplate({

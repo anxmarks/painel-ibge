@@ -1,4 +1,4 @@
-# Integração contínua: a cada push e a cada PR, confere formatação, lint, testes de unidade
+# Integração contínua: a cada push e a cada PR, confere formatação, lint, tipos, testes de unidade
 # e testes de ponta a ponta (dois jobs que rodam em paralelo).
 # Se algum passo falhar, o GitHub marca o commit/PR com um X vermelho.
 name: CI
@@ -35,6 +35,10 @@ jobs:
 
       - name: Lint (ESLint)
         run: npm run lint
+
+      # O código é JavaScript; o TypeScript só confere os tipos descritos nos comentários JSDoc
+      - name: Tipos (TypeScript)
+        run: npm run typecheck
 
       - name: Testes (Vitest)
         run: npm test -- --run # --run executa uma vez, sem modo watch

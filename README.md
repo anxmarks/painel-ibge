@@ -65,12 +65,12 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 
 | Categoria   | Ferramenta                                                                                      |
 | ----------- | ----------------------------------------------------------------------------------------------- |
-| Linguagem   | JavaScript (ES Modules)                                                                         |
+| Linguagem   | JavaScript (ES Modules), com tipos em JSDoc conferidos pelo TypeScript (`checkJs`)              |
 | Build / Dev | [Vite](https://vitejs.dev/)                                                                     |
 | Gráficos    | [Chart.js](https://www.chartjs.org/)                                                            |
 | Mapa        | [d3-geo](https://d3js.org/d3-geo) (só a projeção; o desenho é SVG puro)                         |
 | Estilo      | CSS moderno (variáveis, Grid, Flexbox)                                                          |
-| Qualidade   | ESLint + Prettier                                                                               |
+| Qualidade   | ESLint + Prettier + TypeScript (só checagem de tipos, sem compilar)                             |
 | Testes      | [Vitest](https://vitest.dev/) (unidade) e [Playwright](https://playwright.dev/) (ponta a ponta) |
 | CI / Deploy | GitHub Actions + [GitHub Pages](https://pages.github.com/)                                      |
 
@@ -122,21 +122,23 @@ O fluxo dos dados segue a ideia de um pipeline de ETL:
 ```
 painel-ibge/
 ├── .github/workflows/
-│   ├── ci.yml              # Prettier, ESLint, testes e build a cada push/PR
+│   ├── ci.yml              # Prettier, ESLint, tipos, testes e build a cada push/PR
 │   └── deploy.yml          # Publica no GitHub Pages a cada push na main
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
 │   ├── components/         # kpiCards, barChart, regionChart, stateMap, historyChart, historyTable, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
-│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState e map (faixas do mapa)
+│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState, map (faixas do mapa) e dom
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
+│   ├── types.js            # Tipos compartilhados (JSDoc): StateData, AppState, SidraResponse...
 │   ├── config.js
 │   ├── state.js
 │   └── main.js             # Ponto de entrada
 ├── e2e/                    # Playwright: fluxos no navegador, com a API simulada por fixtures
 ├── tests/                  # Vitest: transform, format, cache, state, exportCsv, urlState, map, history
 ├── index.html
+├── tsconfig.json           # checkJs + strict: o TypeScript confere o JavaScript
 └── vite.config.js
 ```
 
@@ -163,6 +165,7 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 | `npm test`             | Testes com Vitest (modo watch)         |
 | `npm run test:e2e`     | Testes de ponta a ponta com Playwright |
 | `npm run lint`         | Analisa o código com ESLint            |
+| `npm run typecheck`    | Confere os tipos com o TypeScript      |
 | `npm run format`       | Formata o código com Prettier          |
 | `npm run format:check` | Confere a formatação sem alterar nada  |
 
@@ -172,7 +175,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 - **116 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa e a participação das regiões ano a ano.
 - **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
-- **CI:** cada push e cada Pull Request rodam Prettier, ESLint, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
+- **Tipos:** o código é JavaScript, mas cada função descreve em JSDoc o que recebe e o que devolve, e o TypeScript confere tudo em modo `strict` (`npm run typecheck`). Os tipos que circulam pelo painel inteiro ficam em `src/types.js`.
+- **CI:** cada push e cada Pull Request rodam Prettier, ESLint, a checagem de tipos, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
 - **Fluxo de trabalho:** cada etapa do projeto foi uma branch e um Pull Request próprios, com commits no padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/).
 
@@ -205,7 +209,14 @@ Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador:
 
 **Uma arquitetura que aguenta crescer.** Para testar se a separação em camadas funcionava de verdade, adicionei a densidade demográfica depois que o painel já estava pronto. Foram cerca de 90 linhas de código de produção, cada uma no seu lugar: o código da tabela do SIDRA no `config.js`, uma busca a mais no `services/`, uma função pura no `transform.js`, um formatador e um card. O gráfico de barras, os filtros, a URL e a ordenação da tabela passaram a funcionar com o indicador novo sem mudar nada. No caminho, um teste revelou que a função `formatInteger` não arredondava, um bug antigo que só apareceu com um dado novo.
 
-**O que eu faria diferente:** usaria TypeScript desde o início para descrever o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
+**Tipos sem reescrever o projeto.** Eu queria a segurança do TypeScript sem trocar a stack no meio do caminho. A saída foi o `checkJs`: o código continua em JavaScript, os tipos ficam em comentários JSDoc e o TypeScript confere tudo em modo `strict`. Na primeira rodada foram 298 erros. A maioria era só parâmetro sem tipo, mas alguns eram problemas reais:
+
+- **Um bug escondido.** A legenda da série histórica calculava `último - primeiro`. Se um dos anos viesse sem dado (`null`), o JavaScript faria a conta como se fosse 0 e mostraria uma variação errada, com cara de certa. O TypeScript recusou a conta com `null`, e agora a variação aparece como "—".
+- **Atalhos frágeis.** Os gráficos guardavam listas extras dentro dos datasets do Chart.js (`dataset.states`), um campo que a biblioteca não conhece. Essas listas passaram para variáveis do próprio componente.
+- **Elementos que podem faltar.** `document.querySelector` devolve `null` quando o id não existe. A função `requireElement` confere o elemento e o tipo dele na hora e, se algo estiver errado, avisa com o seletor na mensagem.
+- **Textos que precisam ser válidos.** Com `IndicatorKey` sendo só `'population' | 'gdp' | 'gdpPerCapita' | 'density'`, escrever `'pib'` no lugar de `'gdp'` vira erro no editor e no CI, antes de chegar ao navegador.
+
+**O que eu faria diferente:** descreveria os tipos desde o primeiro dia, junto com o formato dos dados da API, e escreveria os testes de ponta a ponta junto com cada funcionalidade, em vez de no fim.
 
 ---
 

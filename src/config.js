@@ -1,3 +1,7 @@
+/** @typedef {import('./types.js').Region} Region */
+/** @typedef {import('./types.js').Indicator} Indicator */
+/** @typedef {import('./types.js').IndicatorKey} IndicatorKey */
+
 // URL base da API de Serviço de Dados do IBGE
 export const API_BASE_URL = 'https://servicodados.ibge.gov.br/api';
 
@@ -22,6 +26,7 @@ export const GDP_SERIES_YEARS = { firstYear: 2002, lastYear: 2023 };
 export const GDP_UNIT_MULTIPLIER = 1000;
 
 // Regiões na ordem oficial do IBGE; a ordem fixa garante que cada região tenha sempre a mesma cor
+/** @type {Region[]} */
 export const REGIONS = [
   { acronym: 'N', name: 'Norte' },
   { acronym: 'NE', name: 'Nordeste' },
@@ -38,6 +43,7 @@ export const ALL_REGIONS = 'all';
 // "shareOf" completa o título da rosca ("Participação das regiões no PIB").
 // "unit" aparece no título da legenda do mapa quando os números da legenda vão sem unidade.
 // "inSentence" é o nome com artigo, para usar no meio de uma frase ("o mapa mostra a densidade...").
+/** @type {Record<IndicatorKey, Indicator>} */
 export const INDICATORS = {
   population: { label: 'População', additive: true, shareOf: 'na população' },
   gdp: { label: 'PIB', additive: true, shareOf: 'no PIB' },
@@ -51,9 +57,11 @@ export const INDICATORS = {
 };
 
 // Indicador inicial do filtro
+/** @type {IndicatorKey} */
 export const DEFAULT_INDICATOR = 'gdpPerCapita';
 
 // A rosca usa este indicador quando o escolhido não pode ser somado (PIB per capita)
+/** @type {IndicatorKey} */
 export const FALLBACK_REGION_INDICATOR = 'gdp';
 
 // Formatação de números e moeda
@@ -89,6 +97,7 @@ export const MAP_MESH = {
 };
 
 // Mapas pintam taxas, não totais: para cada indicador que é total, a taxa que o mapa mostra no lugar
+/** @type {Partial<Record<IndicatorKey, IndicatorKey>>} */
 export const MAP_RATE_INDICATOR = { population: 'density', gdp: 'gdpPerCapita' };
 
 // Número de faixas de cor (cada uma tem uma cor --color-map-1 ... --color-map-5 no variables.css)
