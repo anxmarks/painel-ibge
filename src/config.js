@@ -87,7 +87,48 @@ export const THEME_STORAGE_KEY = 'brasil-em-dados:theme';
 
 // Nomes dos parâmetros da URL que guardam os filtros (ex.: ?regiao=NE&indicador=gdp).
 // Em português porque aparecem para quem usa o painel.
-export const URL_PARAMS = { region: 'regiao', indicator: 'indicador' };
+export const URL_PARAMS = { region: 'regiao', indicator: 'indicador', compare: 'comparar' };
+
+// Comparação de estados: até 3 lado a lado, guardados na URL como "?comparar=SP-BA".
+// O hífen separa as siglas porque a vírgula viraria "%2C" no link.
+export const MAX_COMPARED_STATES = 3;
+export const COMPARE_URL_SEPARATOR = '-';
+
+// Siglas das 27 unidades da federação. Ficam fixas aqui para validar um link
+// antes mesmo de a lista de estados chegar da API.
+export const STATE_ACRONYMS = [
+  'AC',
+  'AL',
+  'AM',
+  'AP',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MG',
+  'MS',
+  'MT',
+  'PA',
+  'PB',
+  'PE',
+  'PI',
+  'PR',
+  'RJ',
+  'RN',
+  'RO',
+  'RR',
+  'RS',
+  'SC',
+  'SE',
+  'SP',
+  'TO',
+];
+
+// Indicadores que a comparação mostra, um por linha da tabela
+/** @type {IndicatorKey[]} */
+export const COMPARE_INDICATORS = ['population', 'gdp', 'gdpPerCapita', 'density'];
 
 // Mapa coroplético.
 // Malha dos estados em GeoJSON. Qualidade "mínima" (~100 KB) basta para o tamanho do mapa na tela.

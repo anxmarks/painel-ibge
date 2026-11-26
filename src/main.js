@@ -22,6 +22,7 @@ import { createRegionChart } from './components/regionChart.js';
 import { createStateMap } from './components/stateMap.js';
 import { createHistoryChart } from './components/historyChart.js';
 import { createHistoryTable } from './components/historyTable.js';
+import { createStateCompare } from './components/stateCompare.js';
 import { createDataTable } from './components/dataTable.js';
 import { createFilters } from './components/filters.js';
 import { createThemeToggle, getActiveTheme } from './components/themeToggle.js';
@@ -130,6 +131,16 @@ function setupDashboard() {
     note: requireElement('#map-note', HTMLElement),
     tooltip: requireElement('#map-tooltip', HTMLElement),
   });
+  const stateCompare = createStateCompare({
+    selects: ['#compare-1', '#compare-2', '#compare-3'].map((selector) =>
+      requireElement(selector, HTMLSelectElement),
+    ),
+    clearButton: requireElement('#compare-clear', HTMLButtonElement),
+    hint: requireElement('#compare-hint', HTMLElement),
+    result: requireElement('#compare-result', HTMLElement),
+    table: requireElement('#compare-table', HTMLTableElement),
+    onChange: (compare) => store.setState({ compare }),
+  });
   const historyChart = createHistoryChart({
     canvas: requireElement('#history-chart', HTMLCanvasElement),
     legend: requireElement('#history-legend', HTMLElement),
@@ -168,7 +179,7 @@ function setupDashboard() {
     // Com status "ready", a malha e a série sempre chegaram juntas com os estados (loadData)
     if (state.status !== 'ready' || !state.mesh || !state.history) return;
 
-    const { states, mesh, history, region, indicator } = state;
+    const { states, mesh, history, region, indicator, compare } = state;
     const visibleStates = filterByRegion(states, region);
 
     applyChartDefaults(); // relê as cores do tema atual antes de atualizar os gráficos
@@ -186,6 +197,9 @@ function setupDashboard() {
 
     // O mapa também recebe todos os estados: os de fora da região ficam cinza, como contexto
     stateMap.update({ states, mesh, indicator, region });
+
+    // A comparação não depende do filtro de região: SP x BA faz sentido com qualquer filtro
+    stateCompare.update({ states, compare, brazil: summarizeStates(states) });
 
     // A série histórica é sempre do PIB, por região; a região filtrada fica em destaque
     historyChart.update({ history, region });
@@ -217,8 +231,8 @@ function urlFor(search) {
 // Mantém a URL igual aos filtros. Cada mudança vira uma entrada no histórico,
 // então o botão "voltar" do navegador desfaz o último filtro.
 /** @param {Filters} filters */
-function syncUrl({ region, indicator }) {
-  const search = buildSearchFromFilters({ region, indicator });
+function syncUrl({ region, indicator, compare }) {
+  const search = buildSearchFromFilters({ region, indicator, compare });
   if (search === window.location.search) return; // nada mudou (ou a mudança veio do próprio "voltar")
   window.history.pushState(null, '', urlFor(search));
 }
@@ -226,8 +240,12 @@ function syncUrl({ region, indicator }) {
 // Link com valor inválido (ex.: ?regiao=XX) ou parâmetros estranhos: corrige a URL
 // sem criar entrada no histórico, senão o "voltar" levaria de novo ao link quebrado
 /** @param {Filters} filters */
-function normalizeUrl({ region, indicator }) {
-  window.history.replaceState(null, '', urlFor(buildSearchFromFilters({ region, indicator })));
+function normalizeUrl({ region, indicator, compare }) {
+  window.history.replaceState(
+    null,
+    '',
+    urlFor(buildSearchFromFilters({ region, indicator, compare })),
+  );
 }
 
 // "Voltar" e "avançar" trocam a URL sem recarregar: aí é o estado que segue a URL

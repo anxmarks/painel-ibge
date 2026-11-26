@@ -74,10 +74,14 @@
  * @property {RegionShareSeries | null} history
  * @property {RegionFilter} region
  * @property {IndicatorKey} indicator
+ * @property {string[]} compare Siglas dos estados comparados (de 0 a 3)
  * @property {Theme} theme
  */
 
-/** @typedef {{ region: RegionFilter, indicator: IndicatorKey }} Filters */
+/**
+ * Tudo o que a URL guarda. "compare" são as siglas dos estados comparados, na ordem escolhida.
+ * @typedef {{ region: RegionFilter, indicator: IndicatorKey, compare: string[] }} Filters
+ */
 
 /** Um estado da lista de localidades da API (/v1/localidades/estados) */
 /**
