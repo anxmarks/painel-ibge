@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildRegionShareSeries, parseAggregateTimeSeries } from '../src/utils/transform.js';
+import {
+  buildRegionShareSeries,
+  buildStateShareSeries,
+  parseAggregateTimeSeries,
+} from '../src/utils/transform.js';
 import { formatPercentagePoints, formatShare } from '../src/utils/format.js';
 
 // Resposta do SIDRA com vários anos: { id: { ano: valor } }
@@ -107,5 +111,37 @@ describe('formatShare', () => {
   it('sempre mostra uma casa decimal', () => {
     expect(formatShare(0.53)).toBe('53,0%');
     expect(formatShare(0.5744)).toBe('57,4%');
+  });
+});
+
+describe('buildStateShareSeries', () => {
+  const response = sidraTimeSeries({
+    11: { 2002: '10', 2003: '30' },
+    35: { 2002: '60', 2003: '50' },
+    33: { 2002: '30', 2003: '20' },
+  });
+  const merged = [
+    { id: 35, acronym: 'SP', name: 'São Paulo', regionAcronym: 'SE' },
+    { id: 11, acronym: 'RO', name: 'Rondônia', regionAcronym: 'N' },
+    { id: 33, acronym: 'RJ', name: 'Rio de Janeiro', regionAcronym: 'SE' },
+  ];
+
+  it('dá a participação de cada estado no total do ano', () => {
+    const { years, states: series } = buildStateShareSeries(merged, response);
+    expect(years).toEqual([2002, 2003]);
+    expect(series.find((item) => item.acronym === 'RO').shares).toEqual([0.1, 0.3]);
+    expect(series.find((item) => item.acronym === 'SP').shares).toEqual([0.6, 0.5]);
+  });
+
+  it('mantém a ordem e os dados de identificação de cada estado', () => {
+    const { states: series } = buildStateShareSeries(merged, response);
+    expect(series.map((item) => item.acronym)).toEqual(['SP', 'RO', 'RJ']);
+    expect(series[0]).toMatchObject({ id: 35, name: 'São Paulo', regionAcronym: 'SE' });
+  });
+
+  it('estado sem dado no ano fica com null e sai do total', () => {
+    const withGap = sidraTimeSeries({ 11: { 2002: '-' }, 35: { 2002: '75' }, 33: { 2002: '25' } });
+    const { states: series } = buildStateShareSeries(merged, withGap);
+    expect(series.map((item) => item.shares[0])).toEqual([0.75, null, 0.25]);
   });
 });

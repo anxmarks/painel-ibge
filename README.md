@@ -13,7 +13,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/preview-dark.png" />
-  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil, comparação entre São Paulo e Bahia e gráfico de linha com a participação das regiões no PIB de 2002 a 2023." width="800" />
+  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil, comparação entre São Paulo e Bahia, gráfico de linha com a participação das regiões no PIB de 2002 a 2023 e pequenos gráficos com a participação de cada estado." width="800" />
 </picture>
 
 ---
@@ -49,6 +49,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Participação das regiões** (N, NE, CO, SE, S) em gráfico de rosca, com legenda que traz porcentagem e valor
 - **Mapa coroplético** dos estados, em 5 faixas de cor, com nome e valor ao passar o mouse (ou tocar). Com uma região filtrada, os outros estados ficam cinza, como contexto
 - **Série histórica** da participação de cada região no PIB, de 2002 a 2023, em gráfico de linha. A legenda mostra o primeiro e o último ano e a variação em pontos percentuais; com uma região filtrada, ela fica em destaque e as outras ficam cinza. Abaixo do gráfico, os valores de todos os anos ficam numa tabela (para leitores de tela ou para quem quer o número exato), que também pode ser exportada em CSV
+- **Série por estado** em pequenos gráficos, um por estado, do que mais ganhou participação no PIB ao que mais perdeu. Todos usam a mesma escala em pontos percentuais, então a inclinação é comparável; com uma região filtrada, só os estados dela
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
 - **Comparação de estados:** até três lado a lado, com o Brasil como referência. Cada valor tem uma barra proporcional ao maior da linha, e o link guarda a escolha (`?comparar=SP-BA`)
 - **Filtros** por região e por indicador, que atualizam o painel inteiro
@@ -128,9 +129,9 @@ painel-ibge/
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
-│   ├── components/         # kpiCards, barChart, regionChart, stateMap, stateCompare, historyChart, historyTable, dataTable, filters, themeToggle, chartTheme
+│   ├── components/         # kpiCards, barChart, regionChart, stateMap, stateCompare, historyChart, historyTable, stateHistory, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
-│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState, map (faixas do mapa), compare (linhas da comparação) e dom
+│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState, map (faixas do mapa), compare (linhas da comparação), sparkline (pequenos gráficos) e dom
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
 │   ├── types.js            # Tipos compartilhados (JSDoc): StateData, AppState, SidraResponse...
 │   ├── config.js
@@ -174,8 +175,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **130 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa, a participação das regiões ano a ano e a comparação de estados.
-- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), comparação de estados (escolha, link corrigido, "voltar" e "Limpar"), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **142 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa, a participação das regiões ano a ano a comparação de estados e os pequenos gráficos da série por estado.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), comparação de estados (escolha, link corrigido, "voltar" e "Limpar"), série por estado (ordem e filtro de região), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **Tipos:** o código é JavaScript, mas cada função descreve em JSDoc o que recebe e o que devolve, e o TypeScript confere tudo em modo `strict` (`npm run typecheck`). Os tipos que circulam pelo painel inteiro ficam em `src/types.js`.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, a checagem de tipos, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.
@@ -208,6 +209,8 @@ Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador:
 
 **Uma série histórica honesta.** O PIB da API está a preços correntes. Em reais, de 2002 a 2023 todas as linhas subiriam juntas, e a maior parte da subida seria inflação, não crescimento. Por isso o gráfico mostra a **participação de cada região no PIB do Brasil** em cada ano: a inflação afeta o numerador e o divisor do mesmo jeito, e a comparação fica justa. O cálculo é uma função pura, com teste, que soma os estados de cada região e divide pelo total do ano. A história aparece: o Sudeste caiu de 57,4% para 53,0% e o Centro-Oeste foi o que mais ganhou (+2,0 p.p.). Para não virar um emaranhado de 27 linhas, o gráfico é por região, e o filtro destaca uma delas em vez de esconder as outras.
 
+**Pequenos gráficos com a mesma régua.** Para a série por estado, 27 linhas num gráfico só virariam um emaranhado. A saída foram pequenos múltiplos: um gráfico por estado, ordenados pela variação. A decisão mais importante foi a escala. Com uma escala própria em cada gráfico, a variação de Roraima (+0,07 p.p.) pareceria tão grande quanto a de São Paulo (-3,4 p.p.). Por isso todos usam a mesma altura em pontos percentuais, e cada um parte do próprio mínimo. O resultado é honesto: perto de São Paulo e do Rio de Janeiro, quase todos os estados mudaram pouco, e Mato Grosso (+1,2 p.p., puxado pelo agronegócio) e Santa Catarina (+1,0 p.p.) se destacam. Os gráficos são SVG puro, sem biblioteca, desenhados por uma função pura com teste.
+
 **Uma arquitetura que aguenta crescer.** Para testar se a separação em camadas funcionava de verdade, adicionei a densidade demográfica depois que o painel já estava pronto. Foram cerca de 90 linhas de código de produção, cada uma no seu lugar: o código da tabela do SIDRA no `config.js`, uma busca a mais no `services/`, uma função pura no `transform.js`, um formatador e um card. O gráfico de barras, os filtros, a URL e a ordenação da tabela passaram a funcionar com o indicador novo sem mudar nada. No caminho, um teste revelou que a função `formatInteger` não arredondava, um bug antigo que só apareceu com um dado novo.
 
 **Tipos sem reescrever o projeto.** Eu queria a segurança do TypeScript sem trocar a stack no meio do caminho. A saída foi o `checkJs`: o código continua em JavaScript, os tipos ficam em comentários JSDoc e o TypeScript confere tudo em modo `strict`. Na primeira rodada foram 298 erros. A maioria era só parâmetro sem tipo, mas alguns eram problemas reais:
@@ -223,7 +226,6 @@ Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador:
 
 ## 🔮 Próximos passos
 
-- [ ] Série histórica por estado, além da série por região
 - [ ] Novos indicadores (IDH, escolaridade, saneamento)
 - [ ] Versão em React + TypeScript
 
