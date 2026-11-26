@@ -231,7 +231,7 @@ Os testes de ponta a ponta pegaram um bug que eu não teria visto no computador:
 
 ## 👩‍💻 Autora
 
-**Ana Luiza Marks** · Bacharel em Ciência da Computação (URI)
+**Ana Luiza Marks**
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)](https://github.com/anxmarks)
 
