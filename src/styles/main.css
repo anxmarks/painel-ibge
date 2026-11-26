@@ -291,6 +291,78 @@ main:focus {
   margin-top: var(--space-md);
 }
 
+/* Comparação de estados: seletores lado a lado, que quebram de linha no celular */
+.compare-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: flex-end;
+}
+
+.compare-controls .filter-field {
+  flex: 1 1 10rem;
+}
+
+/* O "hidden" do HTML perde para o display de .button; aqui ele volta a esconder */
+.compare-controls [hidden] {
+  display: none;
+}
+
+.compare-hint {
+  margin: var(--space-md) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.compare-hint:empty {
+  display: none;
+}
+
+#compare-result {
+  margin-top: var(--space-lg);
+}
+
+.data-table.data-table--compare thead th {
+  padding: var(--space-sm) var(--cell-padding-inline);
+}
+
+.data-table--compare td {
+  min-width: 6.5rem;
+}
+
+/* No celular a tabela rola de lado: a coluna dos indicadores fica parada, para não perder o rótulo */
+.data-table--compare th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  white-space: normal;
+  min-width: 7rem;
+  background: var(--color-surface);
+}
+
+/* Barrinha sob o número: comprimento proporcional ao maior valor da linha */
+.compare-bar {
+  display: block;
+  width: calc(var(--ratio, 0) * 100%);
+  height: 4px;
+  margin: var(--space-xs) 0 0 auto;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+.data-table--compare .is-max .compare-value {
+  font-weight: var(--font-weight-semibold);
+}
+
+.data-table--compare .is-max .compare-bar {
+  background: var(--color-accent-strong);
+}
+
+/* Coluna "Brasil": é referência, então fica mais apagada */
+.compare-reference {
+  color: var(--color-text-muted);
+}
+
 /* Legenda da rosca */
 .legend {
   display: grid;

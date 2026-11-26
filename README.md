@@ -13,7 +13,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/preview-dark.png" />
-  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil e gráfico de linha com a participação das regiões no PIB de 2002 a 2023." width="800" />
+  <img src="docs/preview-light.png" alt="Painel Brasil em Dados: filtros de região e indicador, cards com população, PIB, PIB per capita e densidade demográfica, ranking dos estados em barras, participação das regiões em gráfico de rosca, mapa coroplético do Brasil, comparação entre São Paulo e Bahia e gráfico de linha com a participação das regiões no PIB de 2002 a 2023." width="800" />
 </picture>
 
 ---
@@ -50,6 +50,7 @@ O painel foi feito **sem framework**, de propósito: o objetivo era dominar os f
 - **Mapa coroplético** dos estados, em 5 faixas de cor, com nome e valor ao passar o mouse (ou tocar). Com uma região filtrada, os outros estados ficam cinza, como contexto
 - **Série histórica** da participação de cada região no PIB, de 2002 a 2023, em gráfico de linha. A legenda mostra o primeiro e o último ano e a variação em pontos percentuais; com uma região filtrada, ela fica em destaque e as outras ficam cinza. Abaixo do gráfico, os valores de todos os anos ficam numa tabela (para leitores de tela ou para quem quer o número exato), que também pode ser exportada em CSV
 - **Tabela ordenável** por qualquer coluna, com busca que ignora acentos
+- **Comparação de estados:** até três lado a lado, com o Brasil como referência. Cada valor tem uma barra proporcional ao maior da linha, e o link guarda a escolha (`?comparar=SP-BA`)
 - **Filtros** por região e por indicador, que atualizam o painel inteiro
 - **Estados de interface:** skeleton de carregamento, mensagem de erro com "Tentar novamente"
 - **Cache local** das respostas da API (localStorage, expira em 24h)
@@ -127,9 +128,9 @@ painel-ibge/
 ├── docs/                   # Imagens do README
 ├── public/                 # favicon e robots.txt
 ├── src/
-│   ├── components/         # kpiCards, barChart, regionChart, stateMap, historyChart, historyTable, dataTable, filters, themeToggle, chartTheme
+│   ├── components/         # kpiCards, barChart, regionChart, stateMap, stateCompare, historyChart, historyTable, dataTable, filters, themeToggle, chartTheme
 │   ├── services/           # ibgeApi (fetch) e cache (localStorage com expiração)
-│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState, map (faixas do mapa) e dom
+│   ├── utils/              # transform, format (Intl pt-BR), exportCsv, urlState, map (faixas do mapa), compare (linhas da comparação) e dom
 │   ├── styles/             # variables.css (design tokens e tema escuro) e main.css
 │   ├── types.js            # Tipos compartilhados (JSDoc): StateData, AppState, SidraResponse...
 │   ├── config.js
@@ -173,8 +174,8 @@ O painel abre em `http://localhost:5173/painel-ibge/` (o caminho `/painel-ibge/`
 
 ## ✅ Qualidade e entrega contínua
 
-- **116 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa e a participação das regiões ano a ano.
-- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
+- **130 testes de unidade** (Vitest) cobrem as funções puras: transformação dos dados do SIDRA, cálculo do per capita e da densidade, formatação, cache, store, filtros na URL, geração do CSV, as faixas e a geometria do mapa, a participação das regiões ano a ano e a comparação de estados.
+- **Testes de ponta a ponta** (Playwright) abrem o build de produção num navegador de verdade, no desktop e no celular, e conferem os fluxos completos: filtros e URL, botão "voltar", busca, ordenação, download do CSV, mapa (faixas, filtro de região, caixinha no mouse e no toque), série histórica (valores, destaque da região, tabela e CSV), comparação de estados (escolha, link corrigido, "voltar" e "Limpar"), tema e erro com "Tentar novamente". A API do IBGE é simulada com respostas reais salvas em `e2e/fixtures/`, então os testes não dependem da rede.
 - **Tipos:** o código é JavaScript, mas cada função descreve em JSDoc o que recebe e o que devolve, e o TypeScript confere tudo em modo `strict` (`npm run typecheck`). Os tipos que circulam pelo painel inteiro ficam em `src/types.js`.
 - **CI:** cada push e cada Pull Request rodam Prettier, ESLint, a checagem de tipos, testes de unidade, build e testes de ponta a ponta no GitHub Actions.
 - **Deploy contínuo:** cada merge na `main` roda os testes de novo e, se passarem, publica o build no GitHub Pages.

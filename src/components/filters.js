@@ -40,7 +40,7 @@ export function createFilters({ regionSelect, indicatorSelect, onChange }) {
   );
 
   // Deixa os seletores iguais ao estado (útil no carregamento inicial)
-  /** @param {Filters} filters */
+  /** @param {Pick<Filters, 'region' | 'indicator'>} filters */
   function update({ region, indicator }) {
     regionSelect.value = region;
     indicatorSelect.value = indicator;

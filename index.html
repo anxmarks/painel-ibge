@@ -135,6 +135,55 @@
         </div>
       </section>
 
+      <section class="section panel" aria-labelledby="compare-title">
+        <h2 id="compare-title" class="panel-title">Comparar estados</h2>
+        <p class="panel-note">
+          Até três estados lado a lado, com o Brasil como referência. A escolha fica no link, para
+          compartilhar.
+        </p>
+        <div class="compare-controls">
+          <div class="filter-field">
+            <label for="compare-1" class="filter-label">Estado 1</label>
+            <select id="compare-1" class="select" data-requires-data disabled></select>
+          </div>
+          <div class="filter-field">
+            <label for="compare-2" class="filter-label">Estado 2</label>
+            <select id="compare-2" class="select" data-requires-data disabled></select>
+          </div>
+          <div class="filter-field">
+            <label for="compare-3" class="filter-label">Estado 3</label>
+            <select id="compare-3" class="select" data-requires-data disabled></select>
+          </div>
+          <button
+            type="button"
+            id="compare-clear"
+            class="button button--secondary"
+            data-requires-data
+            disabled
+            hidden
+          >
+            Limpar
+          </button>
+        </div>
+        <p id="compare-hint" class="compare-hint" aria-live="polite"></p>
+        <div
+          id="compare-result"
+          class="table-wrapper"
+          tabindex="0"
+          role="region"
+          aria-labelledby="compare-title"
+          hidden
+        >
+          <table id="compare-table" class="data-table data-table--compare">
+            <caption class="visually-hidden">
+              Comparação dos estados escolhidos, com o Brasil como referência
+            </caption>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="section panel" aria-labelledby="history-title">
         <h2 id="history-title" class="panel-title">Evolução da participação das regiões no PIB</h2>
         <p class="panel-note">

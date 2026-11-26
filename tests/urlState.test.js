@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DEFAULT_FILTERS,
   buildSearchFromFilters,
+  parseCompare,
   parseFiltersFromSearch,
 } from '../src/utils/urlState.js';
 
@@ -14,6 +15,7 @@ describe('parseFiltersFromSearch', () => {
     expect(parseFiltersFromSearch('?regiao=NE&indicador=gdp')).toEqual({
       region: 'NE',
       indicator: 'gdp',
+      compare: [],
     });
   });
 
@@ -37,6 +39,7 @@ describe('parseFiltersFromSearch', () => {
     expect(parseFiltersFromSearch('?utm_source=linkedin&regiao=S')).toEqual({
       region: 'S',
       indicator: DEFAULT_FILTERS.indicator,
+      compare: [],
     });
   });
 });
@@ -51,13 +54,44 @@ describe('buildSearchFromFilters', () => {
   });
 
   it('inclui região e indicador quando os dois mudam', () => {
-    expect(buildSearchFromFilters({ region: 'SE', indicator: 'population' })).toBe(
+    expect(buildSearchFromFilters({ region: 'SE', indicator: 'population', compare: [] })).toBe(
       '?regiao=SE&indicador=population',
     );
   });
 
   it('ida e volta: ler a URL montada devolve os mesmos filtros', () => {
-    const filters = { region: 'N', indicator: 'gdp' };
+    /** @type {import('../src/types.js').Filters} */
+    const filters = { region: 'N', indicator: 'gdp', compare: ['AM', 'PA'] };
     expect(parseFiltersFromSearch(buildSearchFromFilters(filters))).toEqual(filters);
+  });
+});
+
+describe('parseCompare', () => {
+  it('lê as siglas separadas por hífen, na ordem do link', () => {
+    expect(parseCompare('SP-BA')).toEqual(['SP', 'BA']);
+  });
+
+  it('aceita minúsculas, vírgula e espaço', () => {
+    expect(parseCompare('sp,ba rj')).toEqual(['SP', 'BA', 'RJ']);
+  });
+
+  it('descarta siglas desconhecidas e repetidas', () => {
+    expect(parseCompare('SP-XX-SP-BA')).toEqual(['SP', 'BA']);
+  });
+
+  it('guarda no máximo 3 estados', () => {
+    expect(parseCompare('SP-BA-RJ-MG')).toEqual(['SP', 'BA', 'RJ']);
+  });
+
+  it('sem parâmetro, não compara nada', () => {
+    expect(parseCompare(null)).toEqual([]);
+  });
+});
+
+describe('buildSearchFromFilters com comparação', () => {
+  it('junta as siglas com hífen (a vírgula viraria %2C no link)', () => {
+    expect(buildSearchFromFilters({ ...DEFAULT_FILTERS, compare: ['SP', 'BA'] })).toBe(
+      '?comparar=SP-BA',
+    );
   });
 });
